@@ -1,0 +1,4 @@
+# Navigation
+
+Place custom navigation helpers, hooks, or config here.
+expo-router handles file-system based routing automatically via /app/*.tsx files.
