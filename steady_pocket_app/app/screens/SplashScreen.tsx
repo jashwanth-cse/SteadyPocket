@@ -1,13 +1,45 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
-  ActivityIndicator,
   StyleSheet,
   StatusBar,
+  Animated,
+  Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { APP_NAME, APP_TAGLINE } from '../../services/constants';
+import { COLORS, TYPOGRAPHY, COMPONENTS } from '../theme';
+
+// A colorful custom spinner made of Animated Views to match the Google style 
+const GoogleSpinner = () => {
+  const rotation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(rotation, {
+        toValue: 1,
+        duration: 2000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, []);
+
+  const spin = rotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  return (
+    <Animated.View style={[s.spinnerContainer, { transform: [{ rotate: spin }] }]}>
+      <View style={[s.arc, s.arcBlue, { transform: [{ rotate: '0deg' }] }]} />
+      <View style={[s.arc, s.arcRed, { transform: [{ rotate: '90deg' }] }]} />
+      <View style={[s.arc, s.arcYellow, { transform: [{ rotate: '180deg' }] }]} />
+      <View style={[s.arc, s.arcGreen, { transform: [{ rotate: '270deg' }] }]} />
+    </Animated.View>
+  );
+};
 
 export default function SplashScreen() {
   const router = useRouter();
@@ -20,86 +52,79 @@ export default function SplashScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0A2540" />
+    <View style={COMPONENTS.screen}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       {/* Logo Area */}
-      <View style={styles.logoContainer}>
-        <View style={styles.logoCircle}>
-          <Text style={styles.logoIcon}>💰</Text>
+      <View style={s.logoContainer}>
+        <View style={s.logoCircle}>
+          <Text style={s.logoIcon}>💰</Text>
         </View>
-        <Text style={styles.appName}>{APP_NAME}</Text>
-        <Text style={styles.tagline}>{APP_TAGLINE}</Text>
+        <Text style={TYPOGRAPHY.titleLarge}>{APP_NAME}</Text>
+        <Text style={TYPOGRAPHY.bodyHighlight}>{APP_TAGLINE}</Text>
       </View>
 
       {/* Loading Indicator */}
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4FC3F7" />
-        <Text style={styles.loadingText}>Loading...</Text>
+      <View style={s.loadingContainer}>
+        <GoogleSpinner />
       </View>
 
       {/* Footer */}
-      <Text style={styles.footer}>Secure • Fast • Reliable</Text>
+      <Text style={s.footer}>Secured & Protected</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0A2540',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
+const s = StyleSheet.create({
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 60,
+    justifyContent: 'center',
+    flex: 1,
+    marginTop: 100, // Push slightly below center
   },
   logoCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(79, 195, 247, 0.15)',
-    borderWidth: 2,
-    borderColor: 'rgba(79, 195, 247, 0.4)',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   logoIcon: {
-    fontSize: 44,
-  },
-  appName: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-    marginBottom: 8,
-  },
-  tagline: {
-    fontSize: 14,
-    color: '#90CAF9',
-    textAlign: 'center',
-    fontStyle: 'italic',
-    letterSpacing: 0.3,
+    fontSize: 40,
   },
   loadingContainer: {
     alignItems: 'center',
+    paddingBottom: 80,
   },
-  loadingText: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.5)',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginTop: 12,
+  spinnerContainer: {
+    width: 48,
+    height: 48,
   },
+  // We simulate arc segments with borders
+  arc: {
+    position: 'absolute',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 4,
+    borderColor: 'transparent',
+  },
+  arcBlue: { borderTopColor: '#4285F4' },   // Google Blue
+  arcRed: { borderRightColor: '#EA4335' },  // Google Red
+  arcYellow: { borderBottomColor: '#FBBC05' },// Google Yellow
+  arcGreen: { borderLeftColor: '#34A853' }, // Google Green
+
   footer: {
     position: 'absolute',
     bottom: 40,
+    alignSelf: 'center',
     fontSize: 12,
-    color: 'rgba(255,255,255,0.3)',
-    letterSpacing: 2,
+    color: COLORS.textSubtle,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
 });

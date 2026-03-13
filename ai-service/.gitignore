@@ -6,3 +6,4 @@ venv/
 .venv/
 config/gcp-service-account.json
 *.log
+./config/gcp-service-account.json

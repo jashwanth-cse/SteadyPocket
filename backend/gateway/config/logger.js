@@ -9,9 +9,19 @@ const logger = winston.createLogger({
   ),
   transports: [
     new winston.transports.Console({
+      // Use same JSON format so object payloads like logger.info({ event: 'x' })
+      // are printed as readable JSON, not [object Object]
       format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
+        winston.format.colorize({ message: false, level: true }),
+        winston.format.timestamp({ format: 'HH:mm:ss' }),
+        winston.format.printf(({ level, timestamp, ...meta }) => {
+          const msg = typeof meta.message === 'object'
+            ? JSON.stringify(meta)
+            : `${meta.message || ''} ${JSON.stringify(Object.fromEntries(
+                Object.entries(meta).filter(([k]) => k !== 'message')
+              ))}`;
+          return `${timestamp} ${level}: ${msg}`;
+        })
       ),
     }),
   ],

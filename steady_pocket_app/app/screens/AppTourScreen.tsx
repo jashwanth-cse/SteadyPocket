@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { APP_NAME, APP_TAGLINE } from '../../services/constants';
+import { APP_NAME } from '../../services/constants';
+import { COLORS, TYPOGRAPHY, COMPONENTS } from '../theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -57,8 +58,14 @@ function Slide({ item }: { item: (typeof SLIDES)[0] }) {
       </View>
 
       {/* Text */}
-      <Text style={styles.slideTitle}>{item.title}</Text>
-      <Text style={styles.slideDescription}>{item.description}</Text>
+      <View style={styles.textContainer}>
+        <Text style={[TYPOGRAPHY.titleLarge, { textAlign: 'center', marginBottom: 16 }]} numberOfLines={2} adjustsFontSizeToFit>
+          {item.title}
+        </Text>
+        <Text style={[TYPOGRAPHY.body, { textAlign: 'center' }]}>
+          {item.description}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -90,18 +97,8 @@ export default function AppTourScreen() {
   const isLastSlide = activeIndex === SLIDES.length - 1;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-
-      {/* Skip button */}
-      {!isLastSlide && (
-        <TouchableOpacity
-          style={styles.skipButton}
-          onPress={() => router.replace('/phone-auth')}
-          activeOpacity={0.7}>
-          <Text style={styles.skipText}>Skip</Text>
-        </TouchableOpacity>
-      )}
+    <SafeAreaView style={COMPONENTS.screen} edges={['top', 'bottom']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       {/* Slides */}
       <FlatList
@@ -123,7 +120,7 @@ export default function AppTourScreen() {
         style={styles.flatList}
       />
 
-      {/* Bottom Controls */}
+      {/* Bottom Controls (Google Style) */}
       <View style={styles.footer}>
         {/* Pagination Dots */}
         <View style={styles.dotsRow}>
@@ -138,22 +135,32 @@ export default function AppTourScreen() {
           ))}
         </View>
 
-        {/* CTA Button */}
-        {isLastSlide ? (
-          <TouchableOpacity
-            style={styles.getStartedButton}
-            onPress={handleNext}
-            activeOpacity={0.85}>
-            <Text style={styles.getStartedText}>Get Started →</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.nextButton}
-            onPress={handleNext}
-            activeOpacity={0.85}>
-            <Text style={styles.nextText}>Next</Text>
-          </TouchableOpacity>
-        )}
+        {/* Action Buttons in Bottom Row */}
+        <View style={COMPONENTS.bottomCornerAction}>
+          {!isLastSlide ? (
+            <>
+              <TouchableOpacity
+                style={COMPONENTS.buttonText}
+                onPress={() => router.replace('/phone-auth')}
+              >
+                <Text style={COMPONENTS.buttonTextLabel}>Skip</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={COMPONENTS.buttonPrimary}
+                onPress={handleNext}
+              >
+                <Text style={COMPONENTS.buttonPrimaryText}>Next</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity
+              style={[COMPONENTS.buttonPrimary, { flex: 1, marginLeft: 0 }]}
+              onPress={handleNext}
+            >
+              <Text style={COMPONENTS.buttonPrimaryText}>Get Started →</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -161,30 +168,9 @@ export default function AppTourScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
   flatList: {
     flex: 1,
   },
-
-  // Skip
-  skipButton: {
-    position: 'absolute',
-    top: 56,
-    right: 24,
-    zIndex: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  skipText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6B7280',
-    letterSpacing: 0.2,
-  },
-
   // Slide
   slide: {
     flex: 1,
@@ -193,6 +179,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 36,
     paddingTop: 40,
   },
+  textContainer: {
+    width: '100%',
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
   iconWrapper: {
     width: 140,
     height: 140,
@@ -200,37 +191,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 52,
-    // Subtle shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   iconEmoji: {
     fontSize: 60,
   },
-  slideTitle: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#111827',
-    textAlign: 'center',
-    letterSpacing: -0.3,
-    marginBottom: 16,
-    lineHeight: 34,
-  },
-  slideDescription: {
-    fontSize: 16,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 26,
-    letterSpacing: 0.1,
-  },
 
   // Footer
   footer: {
-    paddingHorizontal: 28,
-    paddingBottom: 36,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
     paddingTop: 24,
     alignItems: 'center',
   },
@@ -239,7 +210,7 @@ const styles = StyleSheet.create({
   dotsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
   },
   dot: {
     height: 8,
@@ -247,50 +218,12 @@ const styles = StyleSheet.create({
   },
   dotActive: {
     width: 24,
-    backgroundColor: '#1A56DB',
+    backgroundColor: COLORS.secondary,
     marginRight: 8,
   },
   dotInactive: {
     width: 8,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: COLORS.border,
     marginRight: 8,
-  },
-
-  // Next button (outlined)
-  nextButton: {
-    width: '100%',
-    height: 54,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: '#1A56DB',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nextText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A56DB',
-    letterSpacing: 0.2,
-  },
-
-  // Get Started button (filled)
-  getStartedButton: {
-    width: '100%',
-    height: 54,
-    borderRadius: 14,
-    backgroundColor: '#1A56DB',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#1A56DB',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  getStartedText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
   },
 });

@@ -1,10 +1,12 @@
 /**
- * firebase.ts — WEB version
- * Metro picks this file when bundling for web.
- * Uses browserLocalPersistence so auth survives page refreshes.
+ * firebase.native.ts — NATIVE version (iOS + Android)
+ * Metro picks this file instead of firebase.ts on native builds.
+ * Uses getReactNativePersistence(AsyncStorage) so auth survives app restarts.
  */
 import { initializeApp, getApps } from 'firebase/app';
-import { initializeAuth, getAuth, browserLocalPersistence } from 'firebase/auth';
+import { initializeAuth, getAuth } from 'firebase/auth';
+import { getReactNativePersistence } from 'firebase/auth/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -24,8 +26,10 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 
 let auth: ReturnType<typeof getAuth>;
 try {
-  // browserLocalPersistence → stored in localStorage → survives refresh
-  auth = initializeAuth(app, { persistence: browserLocalPersistence });
+  // getReactNativePersistence → stored in AsyncStorage → survives app restarts
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
 } catch {
   auth = getAuth(app); // already initialized (hot reload)
 }

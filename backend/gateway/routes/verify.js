@@ -77,12 +77,67 @@ router.post(
   verifyFirebaseToken,
   devBypass,
   upload.fields([
-    { name: 'selfie', maxCount: 1 },
+    { name: 'selfie',   maxCount: 1 },
     { name: 'id_photo', maxCount: 1 },
   ]),
   async (req, res) => {
     logger.info({ event: 'selfie_request', uid: req.user.uid });
-    await proxyToFastAPI('/verify/selfie', req, res, ['selfie', 'id_photo']);
+
+    const form = new FormData();
+
+    // 1. Attach the live selfie (sent as file from the app)
+    const selfieFile = req.files?.['selfie']?.[0];
+    if (!selfieFile) {
+      return res.status(400).json({ error: 'MISSING_SELFIE', message: 'selfie file is required' });
+    }
+    form.append('selfie', selfieFile.buffer, {
+      filename:    selfieFile.originalname || 'selfie.jpg',
+      contentType: selfieFile.mimetype     || 'image/jpeg',
+    });
+
+    // 2. Attach the ID photo — either as a direct file upload or by downloading the URL
+    const idPhotoFile = req.files?.['id_photo']?.[0];
+    const idPhotoUrl  = req.body?.id_photo_url;
+
+    if (idPhotoFile) {
+      // App sent the image bytes directly
+      form.append('id_photo', idPhotoFile.buffer, {
+        filename:    idPhotoFile.originalname || 'id_photo.jpg',
+        contentType: idPhotoFile.mimetype     || 'image/jpeg',
+      });
+    } else if (idPhotoUrl) {
+      // App sent a URL (e.g. Cloud Storage) — download it in the gateway
+      try {
+        const imgRes = await axios.get(idPhotoUrl, { responseType: 'arraybuffer', timeout: 10_000 });
+        form.append('id_photo', Buffer.from(imgRes.data), {
+          filename:    'id_photo.jpg',
+          contentType: imgRes.headers['content-type'] || 'image/jpeg',
+        });
+      } catch (dlErr) {
+        logger.error({ event: 'id_photo_download_failed', url: idPhotoUrl, error: dlErr.message });
+        return res.status(400).json({ error: 'ID_PHOTO_DOWNLOAD_FAILED', message: 'Could not fetch profile image from URL' });
+      }
+    } else {
+      return res.status(400).json({ error: 'MISSING_ID_PHOTO', message: 'id_photo file or id_photo_url is required' });
+    }
+
+    // 3. Append metadata
+    form.append('user_id', req.user.uid);
+    form.append('phone',   req.user.phone_number || '');
+
+    try {
+      const response = await axios.post(`${FASTAPI}/verify/selfie`, form, {
+        headers: { ...form.getHeaders(), 'x-user-id': req.user.uid },
+        timeout: 60_000,
+      });
+      logger.info({ event: 'fastapi_success', endpoint: '/verify/selfie', uid: req.user.uid });
+      return res.status(response.status).json(response.data);
+    } catch (err) {
+      const status = err.response?.status || 502;
+      const data   = err.response?.data   || { error: 'AI_SERVICE_UNAVAILABLE' };
+      logger.error({ event: 'fastapi_error', endpoint: '/verify/selfie', status, error: err.message });
+      return res.status(status).json(data);
+    }
   }
 );
 
