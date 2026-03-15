@@ -228,15 +228,15 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 12,
+    borderWidth: 0,
+    borderRadius: 20,
     marginBottom: 16,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.surface,
   },
   idOptionCardSelected: {
-    borderColor: COLORS.secondary,
-    backgroundColor: 'rgba(11, 87, 208, 0.04)', // Slight Google blue tint
+    backgroundColor: '#1E1E1E', // slightly elevated surface value
+    borderWidth: 2,
+    borderColor: COLORS.primary,
   },
   idIcon: {
     fontSize: 32,
@@ -287,15 +287,14 @@ const s = StyleSheet.create({
   shieldIcon: { fontSize: 60 },
   terminalBox: {
     width: '80%',
-    backgroundColor: '#F8F9FA', // Google very light gray
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
+    backgroundColor: COLORS.surface,
+    borderWidth: 0,
+    borderRadius: 20,
     padding: 16,
   },
   terminalText: {
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    color: '#1F1F1F',
+    color: COLORS.primaryText,
     fontSize: 13,
     marginBottom: 16,
     letterSpacing: 0.5,
@@ -313,10 +312,9 @@ const s = StyleSheet.create({
 
   // Success Card
   successCard: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 12,
-    backgroundColor: COLORS.background,
+    borderWidth: 0,
+    borderRadius: 20,
+    backgroundColor: COLORS.surface,
     paddingHorizontal: 20,
     paddingVertical: 12,
   },

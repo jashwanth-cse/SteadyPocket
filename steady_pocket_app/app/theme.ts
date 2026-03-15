@@ -1,34 +1,34 @@
-import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-// ── Colors ────────────────────────────────────────────────────────────────
+// ── AMOLED Colors ─────────────────────────────────────────────────────────
 export const COLORS = {
-  background: '#FFFFFF', // Pure white
-  surface: '#F8F9FA',    // Very light grey for slight contrast
-  primary: '#1F1F1F',    // Almost black for buttons
+  background: '#000000',
+  surface: '#121212',      // Level 1 surface
+  primary: '#3B82F6',      // Primary accent (Google Blue-ish)
   primaryText: '#FFFFFF',
-  secondary: '#0B57D0',  // Google Blue for accents/links
-  textDark: '#1F1F1F',   // Main text
-  textSubtle: '#5F6368', // Secondary text (Google Gray)
-  border: '#DADCE0',     // Subtle border
-  error: '#D93025',      // Google Red
-  success: '#188038',    // Google Green
+  secondary: '#22C55E',    // Success green
+  textDark: '#FFFFFF',     // Main text (inverted for dark mode)
+  textSubtle: '#A1A1AA',   // Secondary text
+  border: '#27272A',       // Divider / Subtle border
+  error: '#EF4444',        // Error red
+  success: '#22C55E',      // Success green
 };
 
 // ── Typography ────────────────────────────────────────────────────────────
-// Note in React Native, weight '500' is Medium, '400' is Regular.
 export const TYPOGRAPHY = StyleSheet.create({
   titleLarge: {
     fontSize: 28,
-    fontWeight: '400',
+    fontWeight: '600',
     color: COLORS.textDark,
-    letterSpacing: 0,
+    letterSpacing: -0.5,
     marginBottom: 16,
     lineHeight: 36,
   },
   titleMedium: {
     fontSize: 22,
-    fontWeight: '400',
+    fontWeight: '600',
     color: COLORS.textDark,
+    letterSpacing: -0.5,
     marginBottom: 8,
   },
   body: {
@@ -61,24 +61,24 @@ export const COMPONENTS = StyleSheet.create({
   contentPad: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 32, // More breathable top padding
+    paddingTop: 32,
   },
   
-  // Google style bottom-right button container
+  // Bottom-right button container
   bottomCornerAction: {
     flexDirection: 'row',
-    justifyContent: 'flex-end', // Aligns to the right
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginTop: 'auto',
     paddingTop: 16,
   },
   
-  // Google style action button (Black, rounded rect)
+  // Primary Button (AMOLED: rounded 999, colored primary)
   buttonPrimary: {
     backgroundColor: COLORS.primary,
     paddingVertical: 14,
     paddingHorizontal: 24,
-    borderRadius: 8, // Google accounts use slight rounding on web, or full pills (100) on mobile. We'll use 8 for a clean squircle.
+    borderRadius: 999, // Google pill button shape
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 100,
@@ -88,30 +88,30 @@ export const COMPONENTS = StyleSheet.create({
   },
   buttonPrimaryText: {
     color: COLORS.primaryText,
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
     letterSpacing: 0.25,
   },
   
-  // Secondary button (text only or subtle outline)
+  // Secondary button
   buttonText: {
     paddingVertical: 14,
     paddingHorizontal: 16,
     marginRight: 8,
   },
   buttonTextLabel: {
-    color: COLORS.secondary,
-    fontSize: 15,
-    fontWeight: '500',
+    color: COLORS.primary,
+    fontSize: 16,
+    fontWeight: '600',
   },
 
-  // Highlight badge (e.g. for a step indicator)
+  // Highlight badge
   badge: {
     alignSelf: 'flex-start',
     backgroundColor: COLORS.surface,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 999,
     marginBottom: 24,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -122,3 +122,4 @@ export const COMPONENTS = StyleSheet.create({
     color: COLORS.textSubtle,
   },
 });
+

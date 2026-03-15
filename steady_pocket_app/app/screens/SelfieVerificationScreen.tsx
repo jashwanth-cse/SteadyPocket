@@ -303,11 +303,10 @@ const s = StyleSheet.create({
   // Profile / Success Card (Minimal Google Style)
   profileCard: {
     marginTop: 32,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 12,
+    borderWidth: 0,
+    borderRadius: 20,
     padding: 24,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.surface,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -327,8 +326,8 @@ const s = StyleSheet.create({
   },
 
   // Buttons for secondary views
-  pill: { backgroundColor: COLORS.primary, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 8, flex: 1, alignItems: 'center' },
+  pill: { backgroundColor: COLORS.primary, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 999, flex: 1, alignItems: 'center' },
   pillText: { color: COLORS.primaryText, fontSize: 15, fontWeight: '500' },
-  outlineBtn: { borderWidth: 1, borderColor: COLORS.border, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 8, flex: 1, alignItems: 'center', backgroundColor: COLORS.background },
+  outlineBtn: { borderWidth: 0, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 999, flex: 1, alignItems: 'center', backgroundColor: COLORS.surface },
   outlineBtnText: { color: COLORS.textDark, fontSize: 15, fontWeight: '500' },
 });

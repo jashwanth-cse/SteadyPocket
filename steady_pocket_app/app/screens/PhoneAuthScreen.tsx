@@ -156,7 +156,7 @@ export default function PhoneAuthScreen() {
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={COMPONENTS.screen} edges={['top']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -309,10 +309,9 @@ const styles = StyleSheet.create({
   countryBadge: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 4,
+    backgroundColor: COLORS.surface,
+    borderWidth: 0,
+    borderRadius: 8,
     paddingHorizontal: 16,
     height: 56,
     marginRight: 12,
@@ -320,10 +319,9 @@ const styles = StyleSheet.create({
   countryCode: { fontSize: 16, fontWeight: '400', color: COLORS.textDark },
   phoneInput: {
     flex: 1,
-    backgroundColor: COLORS.background,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 4,
+    backgroundColor: COLORS.surface,
+    borderWidth: 0,
+    borderRadius: 8,
     height: 56,
     paddingHorizontal: 16,
     fontSize: 16,
@@ -357,16 +355,17 @@ const styles = StyleSheet.create({
   otpBox: {
     width: 48,
     height: 56,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
+    borderRadius: 8,
+    borderWidth: 0,
+    backgroundColor: COLORS.surface,
     fontSize: 24,
     fontWeight: '400',
     color: COLORS.textDark,
   },
   otpBoxFilled: {
     borderColor: COLORS.primary,
+    borderWidth: 2,
+    backgroundColor: '#1E1E1E',
   },
   otpBoxError: {
     borderColor: COLORS.error,
