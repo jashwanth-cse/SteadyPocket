@@ -18,7 +18,7 @@ import type { ConfirmationResult } from 'firebase/auth';
 import FirebaseRecaptcha, { FirebaseRecaptchaRef } from '../components/FirebaseRecaptcha';
 import app from '../../services/firebase';
 
-import { sendOTP, verifyOTP, saveUserToFirestore } from '../../services/authService';
+import { sendOTP, verifyOTP, saveUserToFirestore, checkPhoneExists, storeLoginTimestamp, isSessionExpired, getVerificationStatus, type VerificationStatus } from '../../services/authService';
 import { APP_NAME } from '../../services/constants';
 import { COLORS, TYPOGRAPHY, COMPONENTS } from '../theme';
 
@@ -67,7 +67,15 @@ export default function PhoneAuthScreen() {
     setLoading(true);
     try {
       const fullPhone = `${INDIA_PREFIX}${digits}`;
-      
+
+      // Check if phone exists in registered users
+      const phoneExists = await checkPhoneExists(fullPhone);
+      if (!phoneExists) {
+        setError('This number is not registered as a Swiggy/Zomato delivery partner. Please use the number you signed up with.');
+        setLoading(false);
+        return;
+      }
+
       let verifier: any = undefined;
       const refAny = recaptchaRef.current as any;
       if (refAny?.applicationVerifier) {
@@ -108,7 +116,20 @@ export default function PhoneAuthScreen() {
       const uid = credential.user.uid;
       const fullPhone = `${INDIA_PREFIX}${phone}`;
       await saveUserToFirestore(uid, fullPhone);
-      router.replace('/swiggy-id-upload');
+
+      // Store login timestamp for session management
+      await storeLoginTimestamp(uid);
+
+      // Check verification status and redirect accordingly
+      const status = await getVerificationStatus(uid);
+      const STATUS_ROUTE: Record<VerificationStatus, string> = {
+        pending:        '/swiggy-id-upload',
+        kyc_complete:   '/dashboard',
+        selfie_complete:'/govt-id-verification',
+        fully_verified: '/dashboard',
+      };
+      const targetRoute = STATUS_ROUTE[status as VerificationStatus] ?? '/swiggy-id-upload';
+      router.replace(targetRoute as any);
     } catch (e: any) {
       setError('Invalid code. Please check and try again.');
       setOtp(['', '', '', '', '', '']); // Clear on error
@@ -176,7 +197,7 @@ export default function PhoneAuthScreen() {
             </Text>
             <Text style={TYPOGRAPHY.body}>
               {step === 'phone'
-                ? "Enter your mobile number to get started."
+                ? "Enter your mobile number you have used to signup to your Swiggy/Zomato delivery app."
                 : `We've sent a 6-digit code to\n${INDIA_PREFIX} ${phone}`}
             </Text>
           </View>
@@ -193,7 +214,7 @@ export default function PhoneAuthScreen() {
                 {/* Phone input */}
                 <TextInput
                   style={styles.phoneInput}
-                  placeholder="Mobile number"
+                  placeholder="Mobile number from your delivery app"
                   placeholderTextColor={COLORS.textSubtle}
                   keyboardType="phone-pad"
                   maxLength={10}
@@ -227,6 +248,12 @@ export default function PhoneAuthScreen() {
                     : <Text style={COMPONENTS.buttonPrimaryText}>Next</Text>}
                 </TouchableOpacity>
               </View>
+
+              {/* Invisible reCAPTCHA anchor - Only on phone screen */}
+              <FirebaseRecaptcha
+                ref={recaptchaRef}
+                baseUrl={`https://${app.options.authDomain}`}
+              />
             </View>
           )}
 
@@ -279,12 +306,6 @@ export default function PhoneAuthScreen() {
               </View>
             </View>
           )}
-
-          {/* Invisible reCAPTCHA anchor */}
-          <FirebaseRecaptcha
-            ref={recaptchaRef}
-            baseUrl={`https://${app.options.authDomain}`}
-          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -5,7 +5,11 @@
     "version": "1.0.0",
     "scheme": "steadypocket",
     "orientation": "portrait",
-    "platforms": ["android", "ios", "web"],
+    "platforms": [
+      "android",
+      "ios",
+      "web"
+    ],
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
@@ -23,7 +27,8 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.jashwanthj.steadypocket"
     },
     "web": {
       "bundler": "metro",

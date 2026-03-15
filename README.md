@@ -1,13 +1,11 @@
 <p align="center">
-
 <img src="docs/banner.png" width="900">
-
 </p>
 
 <p align="center">
 
-# 🚴‍♂️ GigSentry  
-### AI-Powered Parametric Protection for Gig Delivery Workers
+# 🚴‍♂️ Steady Pocket  
+### Rain or strike payouts in your pocket
 
 </p>
 
@@ -26,9 +24,9 @@
 
 # 🌍 Overview
 
-**GigSentry** is an **AI-powered parametric income protection platform** designed for **gig delivery workers**, specifically **Swiggy and Zomato partners**.
+**Steady Pocket** is an **AI-powered parametric income protection platform** designed for **gig delivery workers**, specifically **Swiggy and Zomato partners**.
 
-Gig workers rely on **daily earnings**, but external disruptions often reduce their ability to work.
+Gig workers depend on **consistent daily earnings**, but disruptions often reduce their ability to work.
 
 Common disruptions include:
 
@@ -39,7 +37,7 @@ Common disruptions include:
 • 🚔 Traffic Restrictions  
 • 🌫 Severe Pollution Alerts  
 
-GigSentry automatically detects these events and **credits compensation instantly**.
+Steady Pocket automatically detects these events and **credits compensation instantly**.
 
 > ⚡ **No claims. No paperwork. Automatic payouts.**
 
@@ -47,32 +45,32 @@ GigSentry automatically detects these events and **credits compensation instantl
 
 # 🎯 Problem Statement
 
-Delivery partners depend on **consistent daily income**, but disruptions beyond their control reduce deliveries.
+Delivery partners rely on **daily earnings**, but external disruptions reduce delivery opportunities.
 
-These events cause:
+These disruptions cause:
 
-- Reduced working hours  
-- Reduced delivery opportunities  
-- Income instability  
+- Reduced working hours
+- Reduced delivery availability
+- Income instability
 
 Traditional insurance systems fail because they:
 
-- Require manual claim filing  
-- Have long processing times  
-- Are not designed for gig-economy workers  
+- Require manual claim filing
+- Have long processing times
+- Are not designed for gig workers
 
-GigSentry solves this with **parametric protection powered by AI and real-time data**.
+Steady Pocket solves this using **AI-powered parametric protection**.
 
 ---
 
 # 💡 Solution
 
-GigSentry introduces **automatic parametric payouts** triggered by real-world events.
+Steady Pocket introduces **automatic parametric payouts** triggered by real-world disruptions.
 
 Workflow:
 
 1️⃣ External event occurs (rain, strike, etc.)  
-2️⃣ System verifies disruption using APIs  
+2️⃣ System verifies disruption using external APIs  
 3️⃣ Rider presence in affected zone is verified  
 4️⃣ Compensation is automatically credited  
 
@@ -80,71 +78,121 @@ No claim filing required.
 
 ---
 
-# 📱 App Preview
+# 📱 Rider App
 
-<p align="center">
+The Steady Pocket mobile app allows delivery partners to:
 
-<img src="docs/app1.png" width="250">
-<img src="docs/app2.png" width="250">
-<img src="docs/app3.png" width="250">
-
-</p>
-
-Example screens:
-
-• Rider dashboard  
-• Disruption map  
-• Payout notifications  
-• Weekly premium summary
+• verify identity  
+• activate protection plans  
+• view payouts  
+• monitor disruptions  
+• track coverage
 
 ---
 
-# 👤 User Personas
+# 📱 App Flow
 
-### 🚴 Ravi – Full-Time Rider
+### 1️⃣ Rider Verification
 
-Platform: Swiggy  
-Weekly earnings: ₹6000  
+Users verify their identity through a secure onboarding flow.
 
-Problem: Heavy rain reduces deliveries.
+Steps include:
 
-GigSentry automatically detects rainfall and credits **₹400-₹500 compensation**.
+- Phone number verification
+- Swiggy / Zomato partner ID upload
+- Face verification
+- Government ID verification
 
----
-
-### 🚴 Imran – Part-Time Rider
-
-Platform: Zomato  
-Income varies weekly.
-
-GigSentry dynamically adjusts **premium and coverage based on earnings**.
+This ensures only **legitimate delivery partners** can access protection.
 
 ---
 
-### 🚴 Meena – EV Delivery Rider
+### 2️⃣ Dynamic Policy Generation
 
-Works in dense city zones.
+Once verified, the system automatically generates a **weekly protection policy**.
 
-Strikes and road closures reduce delivery opportunities.
+Policy values depend on:
 
-GigSentry detects disruptions and **triggers automatic payout**.
+- weekly earnings
+- work type (full-time / part-time)
+- location risk
+- environmental conditions
+
+Policies are stored in **Firestore** and refreshed weekly.
+
+---
+
+### 3️⃣ Dashboard
+
+The rider dashboard shows:
+
+- Protected weekly income
+- Weekly premium
+- Coverage limit
+- Active policy status
+- Risk alerts
+
+Example:
+
+```
+Protected Weekly Income: ₹6200  
+Weekly Premium: ₹99  
+Coverage Limit: ₹4650
+```
+
+---
+
+### 4️⃣ Coverage Details
+
+Riders can view full protection details including:
+
+- coverage period
+- disruption triggers
+- premium calculation
+- payout eligibility
+
+---
+
+### 5️⃣ Payout History
+
+Users can see all automatic payouts triggered by disruptions.
+
+Example:
+
+```
+Rain Disruption – Chennai
+₹420 credited
+```
+
+---
+
+### 6️⃣ Risk Alerts
+
+The system alerts riders about upcoming disruptions.
+
+Example:
+
+```
+🌧 Heavy rain detected in your zone
+Potential payout may be triggered
+```
 
 ---
 
 # ⚙ Core Concept: Parametric Protection
 
-GigSentry eliminates the traditional claim process.
+Steady Pocket eliminates traditional claim processes.
 
-Instead payouts are triggered when **predefined conditions occur**.
+Payouts are triggered when **predefined conditions occur**.
 
 | Event | Trigger |
 |------|--------|
 | Heavy Rain | Rainfall above threshold |
 | Heatwave | IMD heatwave alert |
-| Strike / Protest | News disruption detection |
+| Strike | News disruption detection |
 | Road Closure | Traffic API incidents |
-| Internet Shutdown | Government restriction |
-| Air Pollution | Severe AQI warning |
+| Internet Shutdown | Government restrictions |
+| Air Pollution | Severe AQI levels |
 
 If the rider is in the **affected zone → payout triggered automatically**.
 
@@ -152,18 +200,19 @@ If the rider is in the **affected zone → payout triggered automatically**.
 
 # 💰 Weekly Premium Model
 
-Premiums are calculated based on rider earnings.
+Premiums are calculated dynamically.
 
 ```
-Premium = (Last Week Earnings × Base Rate) + Risk Coefficient
+Premium = (Weekly Earnings × Base Rate) + Risk Coefficient
 ```
 
-Base Rate  
-**1.5% – 2% of weekly earnings**
+Base Rate:
+
+**1.5% – 2% of weekly income**
 
 Example:
 
-Weekly earnings = ₹6000  
+Weekly income = ₹6000  
 
 Premium ≈ **₹90 – ₹108**
 
@@ -175,13 +224,13 @@ Payout = **80% of average daily earnings**
 
 Example:
 
-Average daily earnings = ₹800  
+Daily earnings = ₹800  
 
 Rain disruption payout ≈ **₹640**
 
-Typical payouts range from:
+Typical payouts range between:
 
-**₹300 – ₹500 per disruption event**
+**₹300 – ₹500 per event**
 
 ---
 
@@ -190,57 +239,178 @@ Typical payouts range from:
 | Data | Source | Purpose |
 |-----|------|------|
 | Weather Data | Tomorrow.io API | Rain detection |
-| Traffic Data | TomTom API | Road closures |
-| News Data | NewsData.io | Strikes / protests |
+| Traffic Data | TomTom API | Road disruptions |
+| News Data | NewsData.io | Strike detection |
 | Rider Location | Mobile GPS | Zone verification |
 
 ---
 
-# 🤖 AI / ML Integration
+# 🤖 Machine Learning Engine
 
-GigSentry uses AI across multiple modules.
+Steady Pocket uses an ML model to generate **dynamic insurance policies**.
 
----
+### Model Purpose
 
-## 🛡 Fraud Detection
+Predict:
 
-Prevents false payout claims.
-
-Techniques used:
-
-• GPS verification  
-• Wi-Fi signal validation  
-• Cell tower triangulation  
-• Sensor fusion  
-
-Machine learning detects anomalies such as:
-
-- impossible travel speeds  
-- GPS spoofing  
-- abnormal activity patterns
+- weekly premium
+- coverage limit
+- rider risk score
 
 ---
 
-## 📊 Risk Modeling
+### ML Inputs
 
-AI calculates **dynamic risk coefficients** based on:
+The model receives structured features such as:
 
-• historical disruptions  
-• rider income volatility  
-• environmental risk levels  
+- weekly earnings
+- delivery activity
+- working hours
+- income volatility
+- city risk score
+- environmental risk factors
 
-This ensures **fair premium pricing**.
+Example input:
+
+```json
+{
+ "weekly_income_last_week": 6200,
+ "deliveries_last_week": 112,
+ "working_hours_last_week": 48,
+ "zone_risk_score": 0.55
+}
+```
 
 ---
 
-## 🔎 Anomaly Detection
+### ML Output
 
-Algorithms used:
+```json
+{
+ "recommended_premium": 102,
+ "coverage_limit": 4800,
+ "risk_score": 0.61
+}
+```
 
-- Isolation Forest  
-- Statistical anomaly detection  
+---
 
-These models detect suspicious payout claims.
+### Model Type
+
+
+**XGBoost Gradient Boosting Regressor**
+
+Reasons:
+
+- High accuracy for tabular data
+- Fast training
+- Robust predictions
+
+---
+
+# 🛡 Fraud Detection System
+
+To prevent false payouts, Steady Pocket includes a fraud detection system.
+
+Detection techniques include:
+
+- GPS verification
+- Wi-Fi signal validation
+- cell tower triangulation
+- anomaly detection models
+
+Suspicious activities include:
+
+- GPS spoofing
+- duplicate accounts
+- payout abuse
+- identity mismatch
+
+Alerts are stored in the **fraud_alerts collection** for admin review.
+
+---
+
+# 🖥 Admin Monitoring Platform
+
+Steady Pocket includes a **separate admin website** used by platform operators.
+
+This system monitors:
+
+- users
+- policies
+- payouts
+- fraud alerts
+- system activity
+
+The admin platform connects directly to the same **Firestore database** used by the mobile app.
+
+---
+
+# 🧭 Admin Dashboard Features
+
+### Platform Overview
+
+Displays:
+
+- total users
+- active policies
+- total payouts
+- fraud alerts
+
+---
+
+### Rider Management
+
+Admins can view rider profiles including:
+
+- verification status
+- policy details
+- payout history
+- fraud risk score
+
+Admins can take actions such as:
+
+- suspend account
+- ban user
+- mark for review
+
+---
+
+### Policy Monitoring
+
+Admins can inspect all generated policies including:
+
+- premium values
+- coverage limits
+- risk scores
+
+This helps monitor the ML model behavior.
+
+---
+
+### Payout Monitoring
+
+Track disruption events and payouts.
+
+Example:
+
+```
+Rain Event – Chennai
+Affected Riders: 320
+Total Payout: ₹2,10,000
+```
+
+---
+
+### Fraud Monitoring
+
+The system automatically generates alerts for suspicious activities such as:
+
+- GPS mismatch
+- duplicate accounts
+- unusual payout patterns
+
+Admins can investigate and take action.
 
 ---
 
@@ -250,21 +420,23 @@ These models detect suspicious payout claims.
 graph TD
 
 A[📱 Mobile App - React Native]
-B[🌐 Node.js Proxy Server]
-C[🤖 FastAPI AI Backend]
-D[🌦 Weather API]
-E[🚧 Traffic API]
-F[📰 News API]
-G[🔥 Firebase Database]
-H[💳 Payment Gateway]
+B[🌐 Node.js Gateway]
+C[🤖 FastAPI AI Engine]
+D[📊 ML Premium Model]
+E[🔥 Firebase Firestore]
+F[🌦 Weather APIs]
+G[📰 News APIs]
+H[🚧 Traffic APIs]
+I[🖥 Admin Monitoring Website]
 
 A --> B
 B --> C
 C --> D
-C --> E
 C --> F
 C --> G
-G --> H
+C --> H
+C --> E
+I --> E
 ```
 
 ---
@@ -278,7 +450,7 @@ A[Disruption Event]
 B[External APIs]
 C[AI Risk Engine]
 D[Trigger Verification]
-E[Rider Zone Validation]
+E[Rider Location Validation]
 F[Automatic Payout]
 
 A --> B
@@ -292,18 +464,13 @@ E --> F
 
 # ⭐ Key Features
 
-✔ Zero-claim parametric insurance  
-✔ AI-powered risk modeling  
-✔ Real-time disruption detection  
+✔ Parametric insurance model  
+✔ AI-powered dynamic premiums  
+✔ Automatic disruption detection  
+✔ Real-time payouts  
 ✔ Fraud detection system  
-✔ Instant payouts  
-✔ Weekly dynamic premium calculation  
-✔ Live disruption monitoring  
-
-Example notification:
-
-> 🌧 Heavy rainfall detected in your zone  
-> ₹450 credited to your account
+✔ Admin monitoring platform  
+✔ Risk alerts for riders  
 
 ---
 
@@ -313,54 +480,60 @@ Example notification:
 
 In-app chatbot helps riders:
 
-• understand coverage  
-• check payout status  
-• ask policy questions  
+- understand policies
+- check payout status
+- ask coverage questions
 
 ---
 
 ## 👥 Referral Program
 
-Users can invite other gig workers.
+Users can invite other delivery partners.
 
 Rewards may include:
 
-- premium discounts  
-- bonus coverage  
-- reward credits  
+- premium discounts
+- bonus coverage
+- referral credits
 
 ---
 
 # 🧰 Technology Stack
 
-### 📱 Mobile Application
+### 📱 Mobile App
 React Native (Expo)
 
-### 🌐 Backend Gateway
-Node.js proxy server
+### 🌐 Backend
+Node.js Gateway
 
 ### 🤖 AI Backend
 Python + FastAPI
 
+### 🧠 Machine Learning
+XGBoost
+
 ### 🔥 Database
-Firebase
+Firebase Firestore
+
+### 🖥 Admin Platform
+Next.js + Node.js
 
 ### ☁ Cloud Infrastructure
 Google Cloud Platform
 
 Services used:
 
-• Vertex AI  
-• Gemini Models  
-• Cloud Run  
-• Cloud Functions  
+- Vertex AI
+- Cloud Run
+- Cloud Functions
+- Firebase Hosting
 
 ---
 
 # 📂 Project Structure
 
 ```
-gigsentry
+steady-pocket
 │
 ├── mobile-app
 │   ├── screens
@@ -368,10 +541,13 @@ gigsentry
 │   └── navigation
 │
 ├── backend
-│   └── Node.js proxy server
+│   └── Node.js gateway
 │
 ├── ai-engine
-│   └── FastAPI ML models
+│   └── FastAPI ML services
+│
+├── admin-dashboard
+│   └── Next.js monitoring platform
 │
 ├── docs
 │   ├── screenshots
@@ -385,36 +561,28 @@ gigsentry
 
 # 📈 Development Roadmap
 
-- [x] Research and problem validation  
+- [x] Research and concept validation  
 - [x] Architecture design  
-- [ ] MVP mobile application  
-- [ ] AI risk modeling  
-- [ ] Fraud detection system  
-- [ ] Live disruption monitoring  
+- [x] Rider onboarding system  
+- [x] Policy engine  
+- [x] Dashboard and coverage UI  
+- [ ] ML premium engine  
+- [ ] Fraud detection automation  
+- [ ] Admin monitoring platform  
 - [ ] Deployment on Google Cloud  
-
----
-
-# 🚀 Future Improvements
-
-• Integration with Swiggy / Zomato APIs  
-• City-level disruption prediction  
-• Rider safety alerts  
-• Preventive weather notifications  
-• EV delivery protection plans  
 
 ---
 
 # 🌍 Impact
 
-GigSentry aims to improve **financial stability for gig workers**.
+Steady Pocket aims to improve **financial stability for gig workers**.
 
 Benefits include:
 
 • instant compensation  
 • no paperwork  
 • fair dynamic pricing  
-• protection against unpredictable disruptions  
+• protection from unpredictable disruptions  
 
 ---
 
@@ -423,8 +591,8 @@ Benefits include:
 Clone repository
 
 ```
-git clone https://github.com/your-username/gigsentry
-cd gigsentry
+git clone https://github.com/your-username/steady-pocket
+cd steady-pocket
 ```
 
 Install dependencies
@@ -445,7 +613,7 @@ npm start
 
 1. Fork the repository  
 2. Create a feature branch  
-3. Commit your changes  
+3. Commit changes  
 4. Submit a pull request  
 
 ---
@@ -453,6 +621,3 @@ npm start
 # 📜 License
 
 This project is developed for **research and hackathon purposes**.
-
----
-

@@ -6,7 +6,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { getDoc, doc, collection, query, where, getDocs } from 'firebase/firestore';
 
 import { db, auth } from '../services/firebase';
 import { updateVerificationStatus } from '../services/authService';
@@ -100,8 +100,8 @@ export default function SwiggyIDUploadScreen() {
       const phone = auth.currentUser?.phoneNumber;
       if (!phone) throw new Error('Not authenticated');
 
-      // Query Firestore partners collection by phone number
-      const q = query(collection(db, 'partners'), where('phone', '==', phone));
+      // Query by phone number - works for both seeded and new users
+      const q = query(collection(db, 'users'), where('phone', '==', phone));
       const snap = await getDocs(q);
 
       if (snap.empty) {
@@ -113,8 +113,9 @@ export default function SwiggyIDUploadScreen() {
       setPartner(data);
 
       // Record progress — so the router resumes here on next launch
-      if (auth.currentUser) {
-        await updateVerificationStatus(auth.currentUser.uid, 'kyc_complete');
+      const uid = auth.currentUser?.uid;
+      if (uid) {
+        await updateVerificationStatus(uid, 'kyc_complete');
       }
 
       setStage('verified');
