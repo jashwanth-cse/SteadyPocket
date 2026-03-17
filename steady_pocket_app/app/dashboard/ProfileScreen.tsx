@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View, ActivityIndicator, StyleSheet, ScrollView, Image } from 'react-native';
+import { Text, View, ActivityIndicator, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { AppScreen } from '../../src/templates/AppScreen';
 import { SurfaceCard } from '../../src/components/ui/SurfaceCard';
-import { TYPOGRAPHY, COLORS } from '../../app/theme';
+import { TYPOGRAPHY, COLORS, COMPONENTS } from '../../app/theme';
 import { Stack } from '../../src/components/layout/Stack';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 
@@ -30,6 +30,15 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [userData, setUserData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      router.replace('/phone-auth');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   useEffect(() => {
     let unsubscribe: () => void;
@@ -118,7 +127,7 @@ export default function ProfileScreen() {
     }
   };
 
-  const ProfileDetailRow = ({ icon, label, value, color = COLORS.primary }: any) => (
+  const ProfileDetailRow = ({ icon, label, value, color = COLORS.primary }: { icon: any, label: string, value: string | undefined, color?: string }) => (
     <View style={styles.detailRow}>
       <View style={[styles.iconBox, { backgroundColor: `${color}15` }]}>
         <MaterialIcons name={icon} size={20} color={color} />
@@ -126,14 +135,14 @@ export default function ProfileScreen() {
       <View style={styles.detailContent}>
         <Text style={[TYPOGRAPHY.label, { color: COLORS.textSubtle }]}>{label}</Text>
         <Text style={[TYPOGRAPHY.bodyHighlight, { color: COLORS.primaryText, marginTop: 4 }]}>
-          {value}
+          {value || 'N/A'}
         </Text>
       </View>
     </View>
   );
 
   return (
-    <AppScreen title="Profile" showBack onBack={() => router.back()}>
+    <AppScreen title="Profile" showBack>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {loading ? (
           <SurfaceCard>
@@ -157,10 +166,8 @@ export default function ProfileScreen() {
                       style={styles.profilePic}
                     />
                   ) : (
-                    <View style={[styles.profilePic, { backgroundColor: COLORS.primary }]}>
-                      <Text style={[TYPOGRAPHY.titleLarge, { color: COLORS.background }]}>
-                        {userData?.emp_name?.charAt(0)?.toUpperCase() || 'U'}
-                      </Text>
+                    <View style={[styles.profilePic, { backgroundColor: `${COLORS.primary}20` }]}>
+                      <Ionicons name="person" size={40} color={COLORS.primary} />
                     </View>
                   )}
                 </View>
@@ -189,8 +196,8 @@ export default function ProfileScreen() {
                           { color: getStatusColor(userData?.status), marginLeft: 4 },
                         ]}
                       >
-                        {userData?.status?.charAt(0).toUpperCase() +
-                          userData?.status?.slice(1).replace('_', ' ') || 'Active'}
+                        {(userData?.status || 'active').charAt(0).toUpperCase() +
+                          (userData?.status || 'active').slice(1).replace('_', ' ')}
                       </Text>
                     </View>
                   </View>
@@ -299,6 +306,29 @@ export default function ProfileScreen() {
                 </View>
               </Stack>
             </SurfaceCard>
+
+            {/* Logout Button */}
+            <View style={{ paddingHorizontal: 16, marginTop: 8, marginBottom: 32 }}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={handleLogout}
+                style={[
+                  COMPONENTS.buttonPrimary,
+                  {
+                    backgroundColor: 'transparent',
+                    borderWidth: 1.5,
+                    borderColor: COLORS.error,
+                    flexDirection: 'row',
+                    gap: 8,
+                  },
+                ]}
+              >
+                <MaterialIcons name="logout" size={20} color={COLORS.error} />
+                <Text style={[COMPONENTS.buttonPrimaryText, { color: COLORS.error }]}>
+                  Logout Securely
+                </Text>
+              </TouchableOpacity>
+            </View>
           </Stack>
         ) : (
           <SurfaceCard>

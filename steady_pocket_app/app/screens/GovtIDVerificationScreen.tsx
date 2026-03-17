@@ -89,17 +89,30 @@ export default function GovtIDVerificationScreen() {
 
       // Check if an active policy already exists
       const policiesRef = collection(db, 'policies');
-      const activePolicyQuery = query(
+      const activePoliciesSnap = await getDocs(query(
         policiesRef,
-        where('user_id', '==', uid),
+        where('user_id', '==', userDocId),
         where('status', '==', 'active')
-      );
-      const activePoliciesSnap = await getDocs(activePolicyQuery);
+      ));
 
       if (!activePoliciesSnap.empty) {
         // Active policy exists, skip creation
-        await updateVerificationStatus(uid, 'kyc_complete');
+        await updateVerificationStatus(uid, 'fully_verified');
         router.replace('/dashboard');
+        return;
+      }
+
+      // ──────────────────────────────────────────────────────────────────────
+      // NEW: Check for pending payment policy
+      // ──────────────────────────────────────────────────────────────────────
+      const pendingPoliciesSnap = await getDocs(query(
+        policiesRef,
+        where('user_id', '==', userDocId),
+        where('status', '==', 'pending')
+      ));
+      if (!pendingPoliciesSnap.empty) {
+        await updateVerificationStatus(uid, 'kyc_complete');
+        router.replace('/premium-payment');
         return;
       }
 
@@ -124,22 +137,23 @@ export default function GovtIDVerificationScreen() {
       // Save policy
       await setDoc(doc(db, 'policies', policyId), {
         policy_id: policyId,
-        user_id: uid,
+        user_id: userDocId,
         weekly_income: weeklyIncome,
         premium: premium,
         coverage_limit: coverageLimit,
         risk_score: riskScore,
         coverage_start: Timestamp.fromDate(now),
         coverage_end: Timestamp.fromDate(nextWeek),
-        status: 'active',
+        status: 'pending', // Set to pending until payment
+        premium_paid: false,
       });
 
       await updateVerificationStatus(uid, 'kyc_complete');
-      router.replace('/dashboard');
+      router.replace('/premium-payment');
     } catch (err) {
       console.error('Failed to generate policy:', err);
       // Still navigate so user isn't stuck
-      router.replace('/dashboard');
+      router.replace('/premium-payment');
     } finally {
       setIsGeneratingPolicy(false);
     }

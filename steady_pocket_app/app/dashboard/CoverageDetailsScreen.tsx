@@ -13,7 +13,8 @@ import { SurfaceCard } from '../../src/components/ui/SurfaceCard';
 import { Stack } from '../../src/components/layout/Stack';
 import { COLORS, TYPOGRAPHY } from '../../app/theme';
 import { auth, db } from '../../services/firebase';
-import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, Timestamp, doc, getDoc } from 'firebase/firestore';
+import { getUserDocIdByAuthUid } from '../../services/authService';
 
 interface PolicyData {
   policy_id: string;
@@ -33,20 +34,22 @@ interface ProtectionTrigger {
 }
 
 const protectionTriggers: ProtectionTrigger[] = [
-  { icon: 'cloud-rain', label: 'Rain disruption' },
-  { icon: 'warning', label: 'Strike or protest' },
-  { icon: 'sunny', label: 'Heatwave' },
+  { icon: 'beach-access', label: 'Rain disruption' },
+  { icon: 'block', label: 'Strike or protest' },
+  { icon: 'wb-sunny', label: 'Heatwave' },
   { icon: 'wifi-off', label: 'Internet shutdown' },
 ];
 
 export default function CoverageDetailsScreen() {
   const [policy, setPolicy] = useState<PolicyData | null>(null);
+  const [weeklyIncome, setWeeklyIncome] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let unsubscribe: (() => void) | null = null;
+    let unsubscribePolicy: (() => void) | null = null;
+    let unsubscribePayouts: (() => void) | null = null;
 
-    const loadPolicy = async () => {
+    const loadPolicyAndIncome = async () => {
       try {
         const uid = auth.currentUser?.uid;
         if (!uid) {
@@ -54,31 +57,60 @@ export default function CoverageDetailsScreen() {
           return;
         }
 
-        // Query active policy
+        const userDocId = await getUserDocIdByAuthUid(uid);
+        if (!userDocId) {
+          setLoading(false);
+          return;
+        }
+
         const q = query(
           collection(db, 'policies'),
-          where('user_id', '==', uid),
+          where('user_id', '==', userDocId),
           where('status', '==', 'active')
         );
 
-        unsubscribe = onSnapshot(q, (snapshot) => {
+        unsubscribePolicy = onSnapshot(q, (snapshot) => {
           if (!snapshot.empty) {
             setPolicy(snapshot.docs[0].data() as PolicyData);
           } else {
             setPolicy(null);
           }
+        });
+
+        const payoutsQ = query(
+          collection(db, 'payouts'),
+          where('user_id', '==', userDocId)
+        );
+
+        unsubscribePayouts = onSnapshot(payoutsQ, (snapshot) => {
+          const now = new Date();
+          const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+          startOfWeek.setHours(0, 0, 0, 0);
+
+          const total = snapshot.docs.reduce((acc, doc) => {
+            const data = doc.data();
+            const timestamp = data.timestamp?.toDate?.() || new Date(data.timestamp);
+            if (timestamp >= startOfWeek) {
+              return acc + (data.amount || 0);
+            }
+            return acc;
+          }, 0);
+
+          setWeeklyIncome(total);
           setLoading(false);
         });
+
       } catch (error) {
-        console.error('Error loading policy:', error);
+        console.error('Error loading policy and income:', error);
         setLoading(false);
       }
     };
 
-    loadPolicy();
+    loadPolicyAndIncome();
 
     return () => {
-      if (unsubscribe) unsubscribe();
+      if (unsubscribePolicy) unsubscribePolicy();
+      if (unsubscribePayouts) unsubscribePayouts();
     };
   }, []);
 
@@ -96,7 +128,7 @@ export default function CoverageDetailsScreen() {
     return (
       <AppScreen title="Coverage Details" showBack>
         <View style={styles.emptyContainer}>
-          <MaterialIcons name="shield-off" size={56} color={COLORS.textSubtle} />
+          <MaterialIcons name="security" size={56} color={COLORS.textSubtle} />
           <Text style={[TYPOGRAPHY.titleMedium, { marginTop: 16 }]}>
             No active coverage found
           </Text>
@@ -194,7 +226,7 @@ export default function CoverageDetailsScreen() {
                 <Text style={[TYPOGRAPHY.label, { marginLeft: 8 }]}>Protected Weekly Income</Text>
               </View>
               <Text style={[TYPOGRAPHY.bodyHighlight, { marginTop: 4 }]}>
-                {formatCurrency((policy as any).protected_weekly_income)}
+                {formatCurrency(weeklyIncome)}
               </Text>
             </View>
 

@@ -36,6 +36,7 @@ export default function SwiggyIDUploadScreen() {
   const [stage, setStage] = useState<Stage>('camera');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [partner, setPartner] = useState<PartnerData | null>(null);
+  const [profileImageLoading, setProfileImageLoading] = useState(true);
 
   // Loading pulse animation
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -228,10 +229,19 @@ export default function SwiggyIDUploadScreen() {
           {/* Minimalist Profile Card */}
           <View style={s.profileCard}>
             <View style={s.profileHeader}>
-              <Image
-                source={{ uri: partner?.profile_pic_url || 'https://ui-avatars.com/api/?name=' + partner?.emp_name }}
-                style={s.profileAvatar}
-              />
+              <View style={s.profileAvatarWrapper}>
+                <Image
+                  source={{ uri: partner?.profile_pic_url || 'https://ui-avatars.com/api/?name=' + partner?.emp_name }}
+                  style={s.profileAvatar}
+                  onLoadEnd={() => setProfileImageLoading(false)}
+                  onError={() => setProfileImageLoading(false)}
+                />
+                {profileImageLoading && (
+                  <View style={s.profileAvatarPlaceholder}>
+                    <ActivityIndicator size="small" color={COLORS.primary} />
+                  </View>
+                )}
+              </View>
               <View style={s.profileInfo}>
                 <Text style={TYPOGRAPHY.titleMedium}>{partner?.emp_name}</Text>
                 <Text style={TYPOGRAPHY.bodyHighlight}>ID: {partner?.partner_id}</Text>
@@ -331,6 +341,25 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
+  },
+  profileAvatarWrapper: {
+    position: 'relative',
+    width: 64,
+    height: 64,
+    marginRight: 16,
+  },
+  profileAvatarPlaceholder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 32,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   profileInfo: {
     flex: 1,

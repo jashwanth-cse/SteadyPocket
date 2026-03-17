@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routes.verify import router as verify_router
+from routes.disruption import router as disruption_router
 from utils.logger import logger
 
 app = FastAPI(
@@ -27,6 +28,7 @@ app.add_middleware(
 
 # ── Routers ──────────────────────────────────────────────────────────────────
 app.include_router(verify_router, prefix="/verify", tags=["verification"])
+app.include_router(disruption_router, prefix="/check-disruptions", tags=["disruption"])
 
 # ── Health Check ─────────────────────────────────────────────────────────────
 @app.get("/health")

@@ -9,6 +9,7 @@ import { Stack } from '../../src/components/layout/Stack';
 import { auth, db } from '../../services/firebase';
 import { collection, query, where, getDocs, orderBy, onSnapshot } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
+import { getUserDocIdByAuthUid } from '../../services/authService';
 
 export default function PoliciesScreen() {
   const router = useRouter();
@@ -26,9 +27,15 @@ export default function PoliciesScreen() {
            return;
         }
 
+        const userDocId = await getUserDocIdByAuthUid(uid);
+        if (!userDocId) {
+          setLoading(false);
+          return;
+        }
+
         const q = query(
           collection(db, 'policies'),
-          where('user_id', '==', uid)
+          where('user_id', '==', userDocId)
         );
         
         unsubscribe = onSnapshot(q, (snap) => {

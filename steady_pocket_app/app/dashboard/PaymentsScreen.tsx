@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
@@ -14,6 +15,7 @@ import { COLORS, TYPOGRAPHY } from '../../app/theme';
 import { auth, db } from '../../services/firebase';
 import { collection, query, where, onSnapshot, getDocs, Timestamp } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
+import { getUserDocIdByAuthUid } from '../../services/authService';
 
 interface EventData {
   event_id: string;
@@ -31,81 +33,22 @@ interface PayoutData {
   user_id: string;
   event_id: string;
   amount: number;
+  location?: string;
   status: 'completed' | 'failed' | 'pending';
   timestamp: Timestamp;
   eventData?: EventData;
 }
 
-export default function PaymentsScreen() {
-  const router = useRouter();
-  const [payouts, setPayouts] = useState<PayoutData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [eventsMap, setEventsMap] = useState<Map<string, EventData>>(new Map());
-
-  useEffect(() => {
-    let unsubscribe: (() => void) | null = null;
-
-    const loadPayoutHistory = async () => {
-      try {
-        const uid = auth.currentUser?.uid;
-        if (!uid) {
-          setLoading(false);
-          return;
-        }
-
-        // Fetch all events once and create a map for quick lookup
-        const eventsQ = collection(db, 'events');
-        const eventsSnap = await getDocs(eventsQ);
-        const newEventsMap = new Map<string, EventData>();
-        eventsSnap.docs.forEach((doc) => {
-          const data = doc.data();
-          newEventsMap.set(data.event_id, data as EventData);
-        });
-        setEventsMap(newEventsMap);
-
-        // Set up real-time listener for payouts with user_id filter
-        const payoutsQ = query(
-          collection(db, 'payouts'),
-          where('user_id', '==', uid)
-        );
-
-        unsubscribe = onSnapshot(payoutsQ, (snapshot) => {
-          const payoutsList = snapshot.docs.map((doc) => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              ...data,
-              eventData: newEventsMap.get(data.event_id),
-            } as PayoutData;
-          });
-
-          // Sort by timestamp descending (most recent first)
-          payoutsList.sort((a, b) => {
-            const timeA = a.timestamp?.toMillis?.() || 0;
-            const timeB = b.timestamp?.toMillis?.() || 0;
-            return timeB - timeA;
-          });
-
-          setPayouts(payoutsList);
-          setLoading(false);
-        });
-      } catch (error) {
-        console.error('Error loading payout history:', error);
-        setLoading(false);
-      }
-    };
-
-    loadPayoutHistory();
-
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, []);
-
+const PayoutItem = ({ payout, eventData, isExpanded, onToggle }: { 
+  payout: PayoutData; 
+  eventData?: EventData; 
+  isExpanded: boolean; 
+  onToggle: () => void; 
+}) => {
   const getIconForEventType = (eventType?: string): string => {
     switch (eventType?.toLowerCase()) {
       case 'rain':
-        return 'cloud-rain';
+        return 'beach-access';
       case 'strike':
         return 'block';
       case 'heatwave':
@@ -120,7 +63,7 @@ export default function PaymentsScreen() {
   };
 
   const getEventTypeLabel = (eventType?: string): string => {
-    if (!eventType) return 'Unknown';
+    if (!eventType) return 'Payout';
     return eventType
       .replace(/_/g, ' ')
       .split(' ')
@@ -148,7 +91,6 @@ export default function PaymentsScreen() {
       return date.toLocaleDateString('en-IN', {
         day: 'numeric',
         month: 'short',
-        year: 'numeric',
       });
     } catch {
       return 'N/A';
@@ -159,6 +101,148 @@ export default function PaymentsScreen() {
     if (!amount) return '₹0';
     return `₹${amount.toLocaleString('en-IN')}`;
   };
+
+  return (
+    <SurfaceCard style={styles.payoutCard}>
+      <TouchableOpacity activeOpacity={0.7} onPress={onToggle} style={styles.payoutMainRow}>
+        <View style={[styles.iconContainer, { backgroundColor: `${COLORS.secondary}10` }]}>
+          <MaterialIcons
+            name={getIconForEventType(eventData?.event_type) as any}
+            size={24}
+            color={COLORS.secondary}
+          />
+        </View>
+        
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={TYPOGRAPHY.bodyHighlight}>{getEventTypeLabel(eventData?.event_type)}</Text>
+          <Text style={[TYPOGRAPHY.label, { color: COLORS.textSubtle, marginTop: 2 }]}>
+            {formatDate(payout.timestamp)}
+          </Text>
+        </View>
+
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={[TYPOGRAPHY.titleMedium, { color: COLORS.primaryText }]}>
+            +{formatCurrency(payout.amount)}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+            <View style={[styles.miniDot, { backgroundColor: getStatusColor(payout.status) }]} />
+            <Text style={[TYPOGRAPHY.label, { color: getStatusColor(payout.status), marginLeft: 4, fontSize: 10 }]}>
+              {payout.status.toUpperCase()}
+            </Text>
+          </View>
+        </View>
+        
+        <MaterialIcons 
+          name={isExpanded ? "expand-less" : "expand-more"} 
+          size={20} 
+          color={COLORS.textSubtle} 
+          style={{ marginLeft: 8 }}
+        />
+      </TouchableOpacity>
+
+      {isExpanded && (
+        <View style={styles.expandedContent}>
+          <View style={styles.divider} />
+          <View style={styles.detailGrid}>
+            <View style={styles.detailCol}>
+              <Text style={TYPOGRAPHY.label}>Location</Text>
+              <Text style={[TYPOGRAPHY.body, { marginTop: 4 }]}>
+                {eventData?.location || payout.location || 'Unknown'}
+              </Text>
+            </View>
+            <View style={styles.detailCol}>
+              <Text style={TYPOGRAPHY.label}>Payout ID</Text>
+              <Text style={[TYPOGRAPHY.body, { marginTop: 4, fontSize: 12 }]}>
+                {payout.payout_id || payout.id}
+              </Text>
+            </View>
+          </View>
+          {eventData?.severity && (
+            <View style={{ marginTop: 12 }}>
+              <Text style={TYPOGRAPHY.label}>Severity</Text>
+              <Text style={[TYPOGRAPHY.body, { marginTop: 4, textTransform: 'capitalize' }]}>
+                {eventData.severity} Disruption
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
+    </SurfaceCard>
+  );
+};
+
+export default function PaymentsScreen() {
+  const router = useRouter();
+  const [payouts, setPayouts] = useState<PayoutData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [eventsMap, setEventsMap] = useState<Map<string, EventData>>(new Map());
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let unsubscribePayouts: (() => void) | null = null;
+    let unsubscribeEvents: (() => void) | null = null;
+
+    const loadPayoutHistory = async () => {
+      try {
+        const uid = auth.currentUser?.uid;
+        if (!uid) {
+          setLoading(false);
+          return;
+        }
+        const userDocId = await getUserDocIdByAuthUid(uid);
+        if (!userDocId) {
+          setLoading(false);
+          return;
+        }
+
+        const eventsQ = collection(db, 'events');
+        unsubscribeEvents = onSnapshot(eventsQ, (eventsSnap) => {
+          const newEventsMap = new Map<string, EventData>();
+          eventsSnap.docs.forEach((doc) => {
+            newEventsMap.set(doc.id, { event_id: doc.id, ...doc.data() } as EventData);
+          });
+          setEventsMap(newEventsMap);
+        });
+
+        const payoutsQ = query(
+          collection(db, 'payouts'),
+          where('user_id', '==', userDocId)
+        );
+
+        unsubscribePayouts = onSnapshot(payoutsQ, (snapshot) => {
+          const payoutsList = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })) as PayoutData[];
+
+          payoutsList.sort((a, b) => {
+            const timeA = a.timestamp?.toMillis?.() || 0;
+            const timeB = b.timestamp?.toMillis?.() || 0;
+            return timeB - timeA;
+          });
+
+          setPayouts(payoutsList);
+          setLoading(false);
+        });
+
+      } catch (error) {
+        console.error('Error loading payout history:', error);
+        setLoading(false);
+      }
+    };
+
+    loadPayoutHistory();
+
+    return () => {
+      if (unsubscribePayouts) unsubscribePayouts();
+      if (unsubscribeEvents) unsubscribeEvents();
+    };
+  }, []);
+
+  const mergedPayouts = payouts.map(p => ({
+    ...p,
+    eventData: eventsMap.get(p.event_id)
+  }));
 
   if (loading) {
     return (
@@ -177,7 +261,7 @@ export default function PaymentsScreen() {
           <MaterialIcons name="payment" size={56} color={COLORS.textSubtle} />
           <Text style={[TYPOGRAPHY.titleMedium, { marginTop: 16 }]}>No payouts received yet</Text>
           <Text style={[TYPOGRAPHY.body, { marginTop: 8, textAlign: 'center' }]}>
-            When a disruption occurs in your work location, payouts will appear here automatically.
+            When a disruption occurs, payouts will appear here automatically.
           </Text>
         </View>
       </AppScreen>
@@ -187,113 +271,14 @@ export default function PaymentsScreen() {
   return (
     <AppScreen title="Payout History" showBack>
       <Stack gap={12}>
-        {payouts.map((payout) => (
-          <SurfaceCard key={payout.id}>
-            {/* Header: Event Type with Icon and Status Badge */}
-            <View style={styles.payoutHeader}>
-              <View style={styles.eventTypeSection}>
-                <View
-                  style={[
-                    styles.iconContainer,
-                    {
-                      backgroundColor: `${COLORS.primary}15`,
-                    },
-                  ]}>
-                  <MaterialIcons
-                    name={getIconForEventType(payout.eventData?.event_type) as any}
-                    size={24}
-                    color={COLORS.primary}
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={TYPOGRAPHY.label}>Event Type</Text>
-                  <Text style={[TYPOGRAPHY.bodyHighlight, { marginTop: 4 }]}>
-                    {getEventTypeLabel(payout.eventData?.event_type)} Disruption
-                  </Text>
-                </View>
-              </View>
-
-              {/* Status Badge */}
-              <View
-                style={[
-                  styles.statusBadge,
-                  {
-                    backgroundColor: `${getStatusColor(payout.status)}15`,
-                  },
-                ]}>
-                <MaterialIcons
-                  name={payout.status === 'completed' ? 'check-circle' : 'error'}
-                  size={16}
-                  color={getStatusColor(payout.status)}
-                />
-                <Text
-                  style={[
-                    TYPOGRAPHY.label,
-                    {
-                      color: getStatusColor(payout.status),
-                      marginLeft: 6,
-                    },
-                  ]}>
-                  {payout.status.toUpperCase()}
-                </Text>
-              </View>
-            </View>
-
-            {/* Divider */}
-            <View style={styles.divider} />
-
-            {/* Amount Section */}
-            <View style={styles.amountSection}>
-              <Text style={TYPOGRAPHY.label}>Amount Credited</Text>
-              <Text
-                style={[
-                  TYPOGRAPHY.titleLarge,
-                  {
-                    color: COLORS.secondary,
-                    marginTop: 4,
-                    fontSize: 32,
-                  },
-                ]}>
-                {formatCurrency(payout.amount)}
-              </Text>
-            </View>
-
-            {/* Divider */}
-            <View style={styles.divider} />
-
-            {/* Location & Date Section */}
-            <View style={styles.detailsSection}>
-              <View style={styles.detailItem}>
-                <View style={styles.detailIcon}>
-                  <MaterialIcons name="location-on" size={18} color={COLORS.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={TYPOGRAPHY.label}>Location</Text>
-                  <Text style={[TYPOGRAPHY.bodyHighlight, { marginTop: 4 }]}>
-                    {payout.eventData?.location || 'Unknown'}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.detailItem}>
-                <View style={styles.detailIcon}>
-                  <MaterialIcons name="calendar-today" size={18} color={COLORS.secondary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={TYPOGRAPHY.label}>Date</Text>
-                  <Text style={[TYPOGRAPHY.bodyHighlight, { marginTop: 4 }]}>
-                    {formatDate(payout.timestamp)}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Payout ID */}
-            <View style={[styles.divider, { marginVertical: 12 }]} />
-            <Text style={[TYPOGRAPHY.label, { color: COLORS.textSubtle }]}>
-              Payout ID: {payout.payout_id}
-            </Text>
-          </SurfaceCard>
+        {mergedPayouts.map((payout) => (
+          <PayoutItem 
+            key={payout.id} 
+            payout={payout} 
+            eventData={payout.eventData}
+            isExpanded={expandedId === payout.id}
+            onToggle={() => setExpandedId(expandedId === payout.id ? null : payout.id)}
+          />
         ))}
       </Stack>
     </AppScreen>
@@ -305,60 +290,50 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 100,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
+    marginTop: 100,
   },
-  payoutHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+  payoutCard: {
+    padding: 0,
+    overflow: 'hidden',
   },
-  eventTypeSection: {
-    flex: 1,
+  payoutMainRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 16,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
   },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
+  miniDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  expandedContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   divider: {
     height: 1,
     backgroundColor: COLORS.border,
-    marginVertical: 16,
+    marginBottom: 12,
   },
-  amountSection: {
-    paddingVertical: 8,
-  },
-  detailsSection: {
-    gap: 12,
-  },
-  detailItem: {
+  detailGrid: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    justifyContent: 'space-between',
   },
-  detailIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: `${COLORS.primary}10`,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+  detailCol: {
+    flex: 1,
   },
 });

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { AppScreen } from '../../src/templates/AppScreen';
 import { SurfaceCard } from '../../src/components/ui/SurfaceCard';
-import { TYPOGRAPHY, COLORS } from '../../app/theme';
+import { TYPOGRAPHY, COLORS, COMPONENTS } from '../../app/theme';
 import { Stack } from '../../src/components/layout/Stack';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { ProgressBar } from 'react-native-paper';
@@ -19,6 +19,8 @@ import { auth, db } from '../../services/firebase';
 import { doc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { getUserDocIdByAuthUid } from '../../services/authService';
+import { useErrorHandler } from '../../hooks/useErrorHandler';
+import { useNotifications } from '../../hooks/useNotifications';
 
 interface PolicyData {
   policy_id?: string;
@@ -37,17 +39,23 @@ interface UserData {
   emp_name?: string;
   phone_number?: string;
   risk_score?: number;
+  wallet_balance?: number;
 }
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { handleFirestoreError } = useErrorHandler();
+  const { expoPushToken } = useNotifications();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [activePolicy, setActivePolicy] = useState<PolicyData | null>(null);
+  const [weeklyIncome, setWeeklyIncome] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     let unsubscribeUser: (() => void) | null = null;
     let unsubscribePolicy: (() => void) | null = null;
+    let unsubscribePayouts: (() => void) | null = null;
 
     const loadDashboardData = async () => {
       try {
@@ -57,7 +65,7 @@ export default function DashboardScreen() {
           return;
         }
 
-        // Get the actual user document ID (which is user_id from seeded data, not auth UID)
+        // Get the actual user document ID
         const userDocId = await getUserDocIdByAuthUid(uid);
         if (!userDocId) {
           console.warn('User document not found');
@@ -65,7 +73,6 @@ export default function DashboardScreen() {
           return;
         }
 
-        // Live Listener for User Profile using correct document ID
         const userRef = doc(db, 'users', userDocId);
         unsubscribeUser = onSnapshot(
           userRef,
@@ -74,33 +81,50 @@ export default function DashboardScreen() {
               setUserData(docSnap.data() as UserData);
             }
           },
-          (error) => {
-            console.error('Error listening to user data:', error);
-          }
+          handleFirestoreError
         );
 
-        // Live Listener for Active Policy
-        const q = query(
+        const policyQ = query(
           collection(db, 'policies'),
-          where('user_id', '==', uid),
-          where('status', '==', 'active')
+          where('user_id', '==', userDocId),
+          where('status', 'in', ['active', 'pending'])
         );
 
         unsubscribePolicy = onSnapshot(
-          q,
+          policyQ,
           (querySnapshot) => {
             if (!querySnapshot.empty) {
               setActivePolicy(querySnapshot.docs[0].data() as PolicyData);
             } else {
               setActivePolicy(null);
             }
-            setLoading(false);
           },
-          (error) => {
-            console.error('Error listening to policy data:', error);
-            setLoading(false);
-          }
+          handleFirestoreError
         );
+
+        const payoutsQ = query(
+          collection(db, 'payouts'),
+          where('user_id', '==', userDocId)
+        );
+
+        unsubscribePayouts = onSnapshot(payoutsQ, (snapshot) => {
+          const now = new Date();
+          const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+          startOfWeek.setHours(0, 0, 0, 0);
+
+          const total = snapshot.docs.reduce((acc, doc) => {
+            const data = doc.data();
+            const timestamp = data.timestamp?.toDate?.() || new Date(data.timestamp);
+            if (timestamp >= startOfWeek) {
+              return acc + (data.amount || 0);
+            }
+            return acc;
+          }, 0);
+
+          setWeeklyIncome(total);
+          setLoading(false);
+        });
+
       } catch (err) {
         console.error('Error setting up dashboard listeners:', err);
         setLoading(false);
@@ -109,10 +133,10 @@ export default function DashboardScreen() {
 
     loadDashboardData();
 
-    // Cleanup listeners on unmount
     return () => {
       if (unsubscribeUser) unsubscribeUser();
       if (unsubscribePolicy) unsubscribePolicy();
+      if (unsubscribePayouts) unsubscribePayouts();
     };
   }, []);
 
@@ -151,8 +175,51 @@ export default function DashboardScreen() {
   };
 
   const formatCurrency = (amount: number | undefined) => {
-    if (!amount) return '₹0';
+    if (amount === undefined || amount === null) return '₹0';
     return `₹${amount.toLocaleString('en-IN')}`;
+  };
+
+  const renderPendingActivationCard = () => {
+    if (!activePolicy || activePolicy.status !== 'pending') return null;
+
+    return (
+      <SurfaceCard style={{ ...styles.protectionCard, borderColor: COLORS.secondary, borderWidth: 1.5 }}>
+        <View style={[styles.cardHeader, { backgroundColor: `${COLORS.secondary}08` }]}>
+          <View style={[styles.statusBadge, { backgroundColor: `${COLORS.secondary}15`, borderColor: `${COLORS.secondary}30` }]}>
+            <View style={[styles.activeDot, { backgroundColor: COLORS.secondary }]} />
+            <Text style={[TYPOGRAPHY.label, { color: COLORS.secondary, marginLeft: 6 }]}>
+              PENDING ACTIVATION
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.coverageAmountSection}>
+          <Text style={[TYPOGRAPHY.body, { color: COLORS.textSubtle, marginBottom: 8 }]}>
+            Coverage Limit
+          </Text>
+          <Text style={[TYPOGRAPHY.titleLarge, { fontSize: 36, color: COLORS.primaryText, fontWeight: '700' }]}>
+            {formatCurrency(activePolicy.coverage_limit)}
+          </Text>
+        </View>
+
+        <View style={{ padding: 24, paddingTop: 0 }}>
+          <View style={styles.alertNotice}>
+            <Ionicons name="information-circle" size={20} color={COLORS.secondary} />
+            <Text style={[TYPOGRAPHY.body, { color: COLORS.primaryText, flex: 1, marginLeft: 10 }]}>
+              Pay the weekly premium to activate your protection and start coverage.
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => router.push('/premium-payment')}
+            style={[COMPONENTS.buttonPrimary, { backgroundColor: COLORS.secondary, marginTop: 16 }]}
+          >
+            <Text style={COMPONENTS.buttonPrimaryText}>Pay Premium & Activate</Text>
+          </TouchableOpacity>
+        </View>
+      </SurfaceCard>
+    );
   };
 
   const renderProtectionStatusCard = () => {
@@ -205,7 +272,7 @@ export default function DashboardScreen() {
                 Protected Weekly Income
               </Text>
               <Text style={[TYPOGRAPHY.bodyHighlight, { color: COLORS.primaryText, fontSize: 16 }]}>
-                {formatCurrency(activePolicy.protected_weekly_income)}
+                {formatCurrency(weeklyIncome)}
               </Text>
             </View>
           </View>
@@ -235,7 +302,7 @@ export default function DashboardScreen() {
                 Policy Status
               </Text>
               <Text style={[TYPOGRAPHY.bodyHighlight, { color: COLORS.success, fontSize: 16 }]}>
-                {activePolicy.status?.charAt(0).toUpperCase() + activePolicy.status?.slice(1) || 'Active'}
+                {activePolicy?.status ? (activePolicy.status.charAt(0).toUpperCase() + activePolicy.status.slice(1)) : 'Active'}
               </Text>
             </View>
           </View>
@@ -335,7 +402,7 @@ export default function DashboardScreen() {
   return (
     <AppScreen
       title="Protection Dashboard"
-      fabIcon="help-circle"
+      fabIcon="help"
       onFabPress={() => console.log('Support FAB pressed')}
     >
       <Stack>
@@ -358,18 +425,20 @@ export default function DashboardScreen() {
                   {userData?.emp_name?.split(' ')[0] || 'User'}
                 </Text>
               </View>
-              {userData?.risk_score ? (
-                <View style={[styles.riskBadge, { borderColor: COLORS.success }]}>
-                  <MaterialIcons name="verified" size={14} color={COLORS.success} />
-                  <Text style={[TYPOGRAPHY.label, { color: COLORS.success, marginLeft: 4 }]}>
-                    Low Risk
+              {userData?.wallet_balance !== undefined && (
+                <View style={[styles.riskBadge, { borderColor: COLORS.secondary, backgroundColor: `${COLORS.secondary}10` }]}>
+                  <MaterialIcons name="account-balance-wallet" size={14} color={COLORS.secondary} />
+                  <Text style={[TYPOGRAPHY.label, { color: COLORS.secondary, marginLeft: 4 }]}>
+                    My Pocket: {formatCurrency(userData.wallet_balance)}
                   </Text>
                 </View>
-              ) : null}
+              )}
             </View>
 
             {/* Main Protection Status Card */}
-            {activePolicy ? renderProtectionStatusCard() : renderNoPolicyCard()}
+            {activePolicy ? (
+              activePolicy.status === 'active' ? renderProtectionStatusCard() : renderPendingActivationCard()
+            ) : renderNoPolicyCard()}
 
             {/* Quick Actions Section */}
             {activePolicy && (
@@ -385,16 +454,16 @@ export default function DashboardScreen() {
                     COLORS.primary
                   )}
                   {renderQuickActionButton(
+                    'account-balance-wallet',
+                    'My Pocket',
+                    () => router.push('/dashboard/WalletScreen'),
+                    COLORS.secondary
+                  )}
+                  {renderQuickActionButton(
                     'history',
                     'Payout History',
                     () => router.push('/dashboard/PaymentsScreen'),
                     COLORS.secondary
-                  )}
-                  {renderQuickActionButton(
-                    'warning',
-                    'Risk Alerts',
-                    () => router.push('/dashboard/ClaimsScreen'),
-                    COLORS.error
                   )}
                 </View>
               </View>
@@ -606,5 +675,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: COLORS.border,
+  },
+  alertNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${COLORS.secondary}10`,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: `${COLORS.secondary}20`,
   },
 });

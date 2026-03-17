@@ -44,7 +44,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
       
       <View style={styles.center}>
         {title && (
-          <Text style={styles.title} numberOfLines={1}>
+          <Text style={styles.title}>
             {title}
           </Text>
         )}

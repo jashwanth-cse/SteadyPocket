@@ -81,15 +81,17 @@ router.post(
     { name: 'id_photo', maxCount: 1 },
   ]),
   async (req, res) => {
-    logger.info({ event: 'selfie_request', uid: req.user.uid });
+    logger.info({ event: 'selfie_request', uid: req.user.uid, phone: req.user.phone_number });
 
     const form = new FormData();
 
     // 1. Attach the live selfie (sent as file from the app)
     const selfieFile = req.files?.['selfie']?.[0];
     if (!selfieFile) {
+      logger.error({ event: 'selfie_missing_file', uid: req.user.uid, files: Object.keys(req.files || {}) });
       return res.status(400).json({ error: 'MISSING_SELFIE', message: 'selfie file is required' });
     }
+    logger.info({ event: 'selfie_file_received', uid: req.user.uid, size: selfieFile.size });
     form.append('selfie', selfieFile.buffer, {
       filename:    selfieFile.originalname || 'selfie.jpg',
       contentType: selfieFile.mimetype     || 'image/jpeg',
@@ -125,17 +127,28 @@ router.post(
     form.append('user_id', req.user.uid);
     form.append('phone',   req.user.phone_number || '');
 
+    // Log where we're sending the request
+    logger.info({ event: 'fastapi_forward_start', uid: req.user.uid, endpoint: `${FASTAPI}/verify/selfie`, fastapi_url: FASTAPI });
+
     try {
       const response = await axios.post(`${FASTAPI}/verify/selfie`, form, {
         headers: { ...form.getHeaders(), 'x-user-id': req.user.uid },
         timeout: 60_000,
       });
-      logger.info({ event: 'fastapi_success', endpoint: '/verify/selfie', uid: req.user.uid });
+      logger.info({ event: 'fastapi_success', endpoint: '/verify/selfie', uid: req.user.uid, status: response.status });
       return res.status(response.status).json(response.data);
     } catch (err) {
       const status = err.response?.status || 502;
       const data   = err.response?.data   || { error: 'AI_SERVICE_UNAVAILABLE' };
-      logger.error({ event: 'fastapi_error', endpoint: '/verify/selfie', status, error: err.message });
+      logger.error({
+        event: 'fastapi_error',
+        endpoint: '/verify/selfie',
+        uid: req.user.uid,
+        status,
+        fastapi_url: FASTAPI,
+        error: err.message,
+        code: err.code,
+      });
       return res.status(status).json(data);
     }
   }

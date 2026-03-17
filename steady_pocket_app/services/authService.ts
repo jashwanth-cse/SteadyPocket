@@ -44,10 +44,13 @@ export async function checkPhoneExists(phone: string): Promise<boolean> {
   try {
     const q = query(collection(db, 'users'), where('phone', '==', phone));
     const snap = await getDocs(q);
+    console.log(`[Auth] Phone check for ${phone}: ${!snap.empty ? 'EXISTS' : 'NOT FOUND'}`);
     return !snap.empty;
   } catch (error) {
     console.error('Error checking phone existence:', error);
-    return false;
+    // Fail open - allow OTP to proceed even if check fails
+    // Better UX: let Firebase auth handle non-existent numbers
+    return true;
   }
 }
 
@@ -56,6 +59,7 @@ export async function sendOTP(
   phoneNumber: string,
   verifier: ApplicationVerifier = mockVerifier
 ): Promise<ConfirmationResult> {
+  console.log(`[Auth] Sending OTP to ${phoneNumber} using ${verifier === mockVerifier ? 'MOCK' : 'PROVIDED'} verifier`);
   return signInWithPhoneNumber(auth, phoneNumber, verifier);
 }
 
