@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Fields: user_id, phone, emp_name, platform, work_location, partner_id, weekly_salary, risk_score, status, profile_pic_url, created_at
+    //
+    // Collection: policies
+    // Fields: policy_id, user_id, premium, coverage_limit, coverage_start, coverage_end, status, risk_score
+    //
+    // Collection: payouts
+    // Fields: payout_id, user_id, event_id, amount, status, timestamp
+    //
+    // Collection: events
+    // Fields: event_id, event_type, location, severity, start_time, end_time, status
+    //
+    // Collection: fraud_alerts
+    // Fields: alert_id, user_id, alert_type, risk_score, status, timestamp
+    //
+    // Collection: system_events
+    // Fields: event_type, user_id, details, timestamp
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "mathupriya2006@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Domain Validators
+    function isValidUser(data) {
+      return data.keys().hasAll(['user_id', 'phone', 'emp_name', 'status']) &&
+             data.emp_name is string && data.emp_name.size() < 100 &&
+             data.phone is string && data.phone.size() < 20 &&
+             data.status in ['active', 'under_review', 'suspended', 'banned'];
+    }
+
+    function isValidPolicy(data) {
+      return data.keys().hasAll(['policy_id', 'user_id', 'status']) &&
+             data.status in ['active', 'expired', 'cancelled'];
+    }
+
+    // Rules
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && (isOwner(userId) || isAdmin()) && isValidUser(request.resource.data);
+      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin()) && isValidUser(request.resource.data);
+      allow delete: if false; // RECORDS MUST NEVER BE DELETED
+    }
+
+    match /policies/{policyId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() && isValidPolicy(request.resource.data);
+      allow update: if isAdmin() && isValidPolicy(request.resource.data);
+      allow delete: if false; // POLICIES MUST NEVER BE DELETED
+    }
+
+    match /payouts/{payoutId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin();
+      allow delete: if false; // PAYOUTS MUST NEVER BE DELETED
+    }
+
+    match /events/{eventId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin();
+      allow delete: if false; // EVENTS MUST NEVER BE DELETED
+    }
+
+    match /fraud_alerts/{alertId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin();
+      allow delete: if false; // ALERTS MUST NEVER BE DELETED
+    }
+
+    match /system_events/{eventId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // AUDIT LOGS ARE IMMUTABLE
+    }
+  }
+}
