@@ -51,10 +51,10 @@ export default function Layout() {
       >
         <div className="flex flex-col h-full">
           <div className="p-6 flex items-center gap-3">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
-              <Banknote className="text-black w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+              <img src="/logo.png" alt="Steady Pocket Logo" className="w-full h-full object-cover" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-white">Steady Pocket</span>
+            <span className="text-xl font-bold tracking-tight text-white">Steady Pocket Admin</span>
           </div>
 
           <nav className="flex-1 px-4 space-y-1 mt-4">
