@@ -119,17 +119,6 @@ def update_wallet_balance(user_id, amount):
         logger.error({"event": "update_wallet_balance_error", "user_id": user_id, "error": str(e)})
         return False
 
-def get_user_fcm_token(user_id):
-    """Fetch user's FCM token from users collection."""
-    try:
-        user_ref = db.collection("users").document(user_id)
-        user_doc = user_ref.get()
-        if user_doc.exists:
-            return user_doc.to_dict().get("fcm_token")
-        return None
-    except Exception as e:
-        logger.error({"event": "get_user_fcm_token_error", "user_id": user_id, "error": str(e)})
-        return None
 
 def get_user_verification_status(user_id):
     """Fetch user's verification status from users collection."""

@@ -20,7 +20,6 @@ import { doc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { getUserDocIdByAuthUid } from '../../services/authService';
 import { useErrorHandler } from '../../hooks/useErrorHandler';
-import { useNotifications } from '../../hooks/useNotifications';
 
 interface PolicyData {
   policy_id?: string;
@@ -45,7 +44,6 @@ interface UserData {
 export default function DashboardScreen() {
   const router = useRouter();
   const { handleFirestoreError } = useErrorHandler();
-  const { expoPushToken } = useNotifications();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [activePolicy, setActivePolicy] = useState<PolicyData | null>(null);
   const [weeklyIncome, setWeeklyIncome] = useState(0);
@@ -401,7 +399,7 @@ export default function DashboardScreen() {
 
   return (
     <AppScreen
-      title="Protection Dashboard"
+      title="Dashboard"
       fabIcon="help"
       onFabPress={() => console.log('Support FAB pressed')}
     >

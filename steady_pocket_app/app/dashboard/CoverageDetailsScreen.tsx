@@ -219,25 +219,23 @@ export default function CoverageDetailsScreen() {
         <SurfaceCard>
           <Text style={TYPOGRAPHY.titleMedium}>Income & Premium</Text>
 
-          <View style={[styles.detailRow, { marginTop: 16 }]}>
+          <View style={[styles.detailRow, { marginTop: 16, gap: 12 }]}>
             <View style={styles.detailItem}>
               <View style={styles.iconLabel}>
                 <MaterialIcons name="trending-up" size={18} color={COLORS.secondary} />
-                <Text style={[TYPOGRAPHY.label, { marginLeft: 8 }]}>Protected Weekly Income</Text>
+                <Text style={[TYPOGRAPHY.label, { marginLeft: 6, flexShrink: 1 }]} numberOfLines={2}>Weekly Income</Text>
               </View>
-              <Text style={[TYPOGRAPHY.bodyHighlight, { marginTop: 4 }]}>
+              <Text style={[TYPOGRAPHY.bodyHighlight, { marginTop: 8 }]}>
                 {formatCurrency(weeklyIncome)}
               </Text>
             </View>
 
-            <View style={styles.divider} />
-
             <View style={styles.detailItem}>
               <View style={styles.iconLabel}>
                 <MaterialIcons name="payments" size={18} color={COLORS.primary} />
-                <Text style={[TYPOGRAPHY.label, { marginLeft: 8 }]}>Weekly Premium</Text>
+                <Text style={[TYPOGRAPHY.label, { marginLeft: 6, flexShrink: 1 }]} numberOfLines={2}>Weekly Premium</Text>
               </View>
-              <Text style={[TYPOGRAPHY.bodyHighlight, { marginTop: 4 }]}>
+              <Text style={[TYPOGRAPHY.bodyHighlight, { marginTop: 8 }]}>
                 {formatCurrency((policy as any).weekly_premium || (policy as any).premium)}
               </Text>
             </View>
