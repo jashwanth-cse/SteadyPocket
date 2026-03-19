@@ -79,6 +79,15 @@ No claim filing required.
 ---
 
 # 📱 Rider App
+<p align="center">
+  <img src="docs/app1.jpeg" width="300"/>
+  <img src="docs/app3.jpeg" width="300" />
+  <img src="docs/app2.jpeg" width="300"/>
+</p>
+
+<p align="center">
+  <b>Seamless rider experience • Real-time payouts • Smart risk alerts</b>
+</p>
 
 The Steady Pocket mobile app allows delivery partners to:
 
@@ -332,6 +341,14 @@ Alerts are stored in the **fraud_alerts collection** for admin review.
 ---
 
 # 🖥 Admin Monitoring Platform
+<p align="center">
+  <img src="docs/web1.png" width="500"/>
+  <img src="docs/web2.png" width="500"/>
+</p>
+
+<p align="center">
+  <b>Centralized monitoring of users, payouts, and fraud detection</b>
+</p>
 
 Steady Pocket includes a **separate admin website** used by platform operators.
 
