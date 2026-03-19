@@ -115,7 +115,7 @@ export default function GlobalSearch() {
                 </button>
               </div>
 
-              <div className="max-h-[400px] overflow-y-auto p-2">
+              <div className="max-h-[400px] overflow-y-auto no-scrollbar p-2">
                 {results.length > 0 ? (
                   <div className="space-y-1">
                     {results.map((result, idx) => (

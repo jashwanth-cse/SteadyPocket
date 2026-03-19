@@ -34,6 +34,7 @@ interface Rider {
 export default function Riders() {
   const { riders, isLoading, performAction } = useStore();
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [selectedRider, setSelectedRider] = useState<Rider | null>(null);
 
   const handleRiderAction = async (riderId: string, newStatus: Rider['status']) => {
@@ -57,22 +58,27 @@ export default function Riders() {
     );
   }
 
-  const filteredRiders = riders.filter(r => 
-    (r.emp_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (r.phone || '').includes(searchTerm) ||
-    (r.partner_id || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredRiders = riders.filter(r => {
+    const matchesSearch = 
+      (r.emp_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (r.phone || '').includes(searchTerm) ||
+      (r.partner_id || '').toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Rider Management</h1>
           <p className="text-neutral-500">Monitor and manage gig worker accounts.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 group-focus-within:text-emerald-500 transition-colors" />
             <input 
               type="text" 
               placeholder="Search by name, phone, ID..."
@@ -81,20 +87,37 @@ export default function Riders() {
               className="bg-[#111111] border border-white/5 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 w-full sm:w-80 transition-all"
             />
           </div>
+
+          <div className="flex items-center gap-1 bg-[#111111] p-1 rounded-xl border border-white/5 overflow-x-auto no-scrollbar">
+            {['all', 'active', 'under_review', 'suspended', 'banned'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
+                  statusFilter === status 
+                    ? 'bg-emerald-500 text-black' 
+                    : 'text-neutral-500 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {status.replace('_', ' ')}
+              </button>
+            ))}
+          </div>
+
           <button 
             onClick={() => downloadCSV(filteredRiders, 'riders-report')}
-            className="flex items-center gap-2 px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl hover:bg-emerald-500/20 transition-all text-sm font-bold"
+            className="flex items-center gap-2 px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl hover:bg-emerald-500/20 transition-all text-sm font-bold w-full sm:w-fit"
           >
             <Download className="w-4 h-4" /> Export CSV
           </button>
-          <button className="p-3 bg-[#111111] border border-white/5 rounded-xl text-neutral-400 hover:text-white transition-colors">
+          <button className="p-3 bg-[#111111] border border-white/5 rounded-xl text-neutral-400 hover:text-white transition-colors hidden sm:block">
             <Filter className="w-5 h-5" />
           </button>
         </div>
       </div>
 
       <div className="bg-[#111111] border border-white/5 rounded-3xl overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto no-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/5 bg-white/[0.02]">
