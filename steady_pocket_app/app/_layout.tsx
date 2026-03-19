@@ -1,117 +1,191 @@
 /**
  * Root Layout — SteadyPocket
- * ─────────────────────────────────────────────────────────────────────────────
- * Production-grade auth routing:
+ * -------------------------------------------------------------
+ * Launch Flow
  *
- *  On every app launch / page refresh:
- *  1. Wait for Firebase to restore auth state (onAuthStateChanged fires once)
- *  2. No user  →  /phone-auth
- *  3. User exists, check Firestore verification_status:
- *     - null / not found   → /phone-auth   (fresh install, DB not set up yet)
- *     - 'pending'          → /swiggy-id-upload
- *     - 'kyc_complete'     → /selfie-verification
- *     - 'selfie_complete'  → /govt-id-verification
- *     - 'fully_verified'   → /dashboard  (or index for now)
- *
- *  Phone auth is only shown again if:
- *   - Firebase session expires (token rotation)
- *   - User clears browser localStorage (web) or app data (native)
+ * 1. Always show Splash screen (3s)
+ * 2. Check first-time user
+ *    - first time → /app-tour
+ *    - otherwise → auth check
+ * 3. Firebase restores auth
+ * 4. No user → /phone-auth
+ * 5. User exists → check verification status
  */
 
-import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { Stack, useRouter, useSegments } from 'expo-router';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '../services/firebase';
-import { getVerificationStatus, VerificationStatus } from '../services/authService';
+import React, { useEffect, useState } from "react";
+import { StyleSheet } from "react-native";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { onAuthStateChanged, User } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// ── Route map by verification status ─────────────────────────────────────────
+import { auth } from "../services/firebase";
+import {
+  getVerificationStatus,
+  VerificationStatus,
+  isSessionExpired,
+} from "../services/authService";
+import { ToastProvider } from "../components/Toast";
+import SplashScreen from "./screens/SplashScreen";
+
+/* -------------------------------------------------------------------------- */
+/* Route map */
+/* -------------------------------------------------------------------------- */
+
 const STATUS_ROUTE: Record<VerificationStatus, string> = {
-  pending:        '/swiggy-id-upload',
-  kyc_complete:   '/selfie-verification',
-  selfie_complete:'/govt-id-verification',
-  fully_verified: '/dashboard',
+  pending: "/swiggy-id-upload",
+  kyc_complete: "/dashboard",
+  selfie_complete: "/govt-id-verification",
+  fully_verified: "/dashboard",
 };
 
-type AuthState = 'loading' | 'unauthenticated' | 'authenticated';
+type AppState =
+  | "splash"
+  | "app-tour"
+  | "auth-check"
+  | "authenticated"
+  | "unauthenticated";
+
+const FIRST_TIME_FLAG = "STEADY_POCKET_FIRST_TIME";
+
+/* -------------------------------------------------------------------------- */
+/* Root Layout */
+/* -------------------------------------------------------------------------- */
 
 export default function RootLayout() {
-  const router  = useRouter();
+  const router = useRouter();
   const segments = useSegments();
-  const [authState, setAuthState] = useState<AuthState>('loading');
+
+  const [appState, setAppState] = useState<AppState>("splash");
+  const [isReady, setIsReady] = useState(false);
+
+  /* ---------------------------------------------------------------------- */
+  /* PHASE 1 — Authentication & Initialization */
+  /* ---------------------------------------------------------------------- */
 
   useEffect(() => {
-    // onAuthStateChanged fires once on mount with the restored user (from localStorage)
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 4000);
+
     const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
-      if (!user) {
-        setAuthState('unauthenticated');
-        return;
-      }
-
       try {
-        const status = await getVerificationStatus(user.uid);
+        const hasVisited = await AsyncStorage.getItem(FIRST_TIME_FLAG);
 
-        if (!status) {
-          // User exists in Firebase Auth but not in Firestore yet
-          // (edge case: old account before Firestore was set up)
-          setAuthState('unauthenticated');
+        if (!hasVisited) {
+          await AsyncStorage.setItem(FIRST_TIME_FLAG, "true");
+          setAppState("app-tour");
           return;
         }
 
-        const targetRoute = STATUS_ROUTE[status] ?? '/swiggy-id-upload';
-        setAuthState('authenticated');
+        if (!user) {
+          setAppState("unauthenticated");
+          return;
+        }
 
-        // Only redirect if we're not already on the right screen
-        const currentRoute = '/' + (segments.join('/') || '');
-        if (currentRoute !== targetRoute) {
-          router.replace(targetRoute as any);
+        // User is logged in, check verification status
+        const status = await getVerificationStatus(user.uid);
+
+        if (!status) {
+          setAppState("unauthenticated");
+        } else {
+          if (status === "kyc_complete") {
+            const expired = await isSessionExpired(user.uid);
+            if (expired) {
+              setAppState("unauthenticated");
+              return;
+            }
+          }
+
+          setAppState("authenticated");
+          
+          // Navigation logic
+          const targetRoute = STATUS_ROUTE[status] || "/swiggy-id-upload";
+          const currentRoute = "/" + segments.join("/");
+
+          // Only redirect if we are at the root or explicitly forbidden from the current route
+          if (currentRoute === "/" || currentRoute === "/splash" || currentRoute === "/phone-auth") {
+            router.replace(targetRoute as any);
+          }
         }
       } catch (err) {
-        console.error('[Layout] Failed to check verification status:', err);
-        // On network error, still allow the user through — don't lock them out
-        setAuthState('unauthenticated');
+        console.error("[Layout] Init failed:", err);
+        setAppState("unauthenticated");
       }
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      clearTimeout(timer);
+    };
   }, []);
 
-// Routing effect: when authState changes to unauthenticated → send to phone-auth
-  useEffect(() => {
-    if (authState === 'unauthenticated') {
-      router.replace('/phone-auth');
-    }
-  }, [authState]);
+  /* ---------------------------------------------------------------------- */
+  /* PHASE 2 — Fallback Navigation (Unauthenticated/Tour) */
+  /* ---------------------------------------------------------------------- */
 
-  if (authState === 'loading') {
+  useEffect(() => {
+    if (!isReady) return;
+
+    if (appState === "app-tour") {
+      router.replace("/app-tour");
+    } else if (appState === "unauthenticated") {
+      router.replace("/phone-auth");
+    }
+  }, [appState, isReady]);
+
+  /* ---------------------------------------------------------------------- */
+  /* Router Layout with Splash Overlay */
+  /* ---------------------------------------------------------------------- */
+
+  /* ---------------------------------------------------------------------- */
+  /* Router Layout with Splash Overlay */
+  /* ---------------------------------------------------------------------- */
+
+  if (!isReady) {
     return (
-      <View style={styles.splash}>
-        <ActivityIndicator size="large" color="#0B57D0" />
-      </View>
+      <GestureHandlerRootView style={styles.container}>
+        <SafeAreaProvider>
+          <SplashScreen />
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     );
   }
 
   return (
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#FFFFFF' } }}>
-          <Stack.Screen name="index"                />
-          <Stack.Screen name="splash"               />
-          <Stack.Screen name="app-tour"             />
-          <Stack.Screen name="phone-auth"           />
-          <Stack.Screen name="swiggy-id-upload"     />
-          <Stack.Screen name="selfie-verification"  />
-          <Stack.Screen name="govt-id-verification" />
-          <Stack.Screen name="dashboard"            />
-        </Stack>
+        <ToastProvider>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: "#FFFFFF" },
+            }}
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="splash" />
+            <Stack.Screen name="app-tour" />
+            <Stack.Screen name="phone-auth" />
+            <Stack.Screen name="swiggy-id-upload" />
+            <Stack.Screen name="selfie-verification" />
+            <Stack.Screen name="govt-id-verification" />
+            <Stack.Screen name="premium-payment" />
+            <Stack.Screen name="dashboard" />
+          </Stack>
+        </ToastProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* Styles */
+/* -------------------------------------------------------------------------- */
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  splash:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' },
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
 });

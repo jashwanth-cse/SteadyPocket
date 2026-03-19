@@ -90,6 +90,9 @@ export default function SelfieVerificationScreen() {
       const idToken = await auth.currentUser?.getIdToken(true);
       if (!idToken) throw new Error('Not authenticated');
 
+      console.log('[Selfie] API_URL:', API_URL);
+      console.log('[Selfie] Endpoint:', `${API_URL}/verify/selfie`);
+
       if (!profile_pic_url) {
         // No photo to compare — accept liveness only (dev shortcut)
         console.warn('[Selfie] No profile_pic_url; bypassing face match');
@@ -114,14 +117,23 @@ export default function SelfieVerificationScreen() {
       form.append('id_photo_url', profile_pic_url);
 
       // ── POST to gateway ───────────────────────────────────────────────────
+      console.log('[Selfie] Sending request to:', `${API_URL}/verify/selfie`);
       const res = await fetch(`${API_URL}/verify/selfie`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${idToken}`, Accept: 'application/json' },
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          Accept: 'application/json',
+          // ngrok requires this header to bypass browser warning
+          'ngrok-skip-browser-warning': 'true',
+        },
         body: form,
       });
 
+      console.log('[Selfie] Response status:', res.status);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Verification failed');
+      console.log('[Selfie] Response data:', data);
+
+      if (!res.ok) throw new Error(data.error || `Verification failed (${res.status})`);
 
       if (data.verified === true) {
         if (auth.currentUser) await updateVerificationStatus(auth.currentUser.uid, 'selfie_complete');
@@ -131,7 +143,8 @@ export default function SelfieVerificationScreen() {
         setStage('failed');
       }
     } catch (err: any) {
-      console.error('[Selfie] Error:', err);
+      console.error('[Selfie] Error:', err.message);
+      console.error('[Selfie] Full error:', err);
       setStage('failed');
     }
   };

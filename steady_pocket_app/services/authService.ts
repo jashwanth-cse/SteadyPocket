@@ -10,7 +10,17 @@ import {
   ApplicationVerifier,
   ConfirmationResult,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  doc,
+  setDoc,
+  getDoc,
+  serverTimestamp,
+  query,
+  where,
+  collection,
+  getDocs,
+  updateDoc,
+} from 'firebase/firestore';
 import { auth, db } from './firebase';
 
 export type VerificationStatus =
@@ -29,11 +39,27 @@ class MockRecaptchaVerifier implements ApplicationVerifier {
 }
 export const mockVerifier = new MockRecaptchaVerifier();
 
+// ─── Check if phone exists in users collection ────────────────────────────────
+export async function checkPhoneExists(phone: string): Promise<boolean> {
+  try {
+    const q = query(collection(db, 'users'), where('phone', '==', phone));
+    const snap = await getDocs(q);
+    console.log(`[Auth] Phone check for ${phone}: ${!snap.empty ? 'EXISTS' : 'NOT FOUND'}`);
+    return !snap.empty;
+  } catch (error) {
+    console.error('Error checking phone existence:', error);
+    // Fail open - allow OTP to proceed even if check fails
+    // Better UX: let Firebase auth handle non-existent numbers
+    return true;
+  }
+}
+
 // ─── Send OTP ─────────────────────────────────────────────────────────────────
 export async function sendOTP(
   phoneNumber: string,
   verifier: ApplicationVerifier = mockVerifier
 ): Promise<ConfirmationResult> {
+  console.log(`[Auth] Sending OTP to ${phoneNumber} using ${verifier === mockVerifier ? 'MOCK' : 'PROVIDED'} verifier`);
   return signInWithPhoneNumber(auth, phoneNumber, verifier);
 }
 
@@ -43,38 +69,146 @@ export async function verifyOTP(confirmation: ConfirmationResult, code: string) 
 }
 
 // ─── Save / init user in Firestore ───────────────────────────────────────────
-// Uses merge:true so it never overwrites existing verification progress
-export async function saveUserToFirestore(uid: string, phone: string): Promise<void> {
-  await setDoc(
-    doc(db, 'users', uid),
-    {
-      user_id:   uid,
-      phone,
-      phone_verified:      true,
-      verification_status: 'pending',
-      created_at:          serverTimestamp(),
-    },
-    { merge: true }          // ← preserves existing verification_status
-  );
+// Only updates existing seeded user data with auth info (no new account creation)
+export async function saveUserToFirestore(uid: string, phone: string): Promise<{docId: string}> {
+  try {
+    // Check if phone exists in users collection (from seeded data)
+    const q = query(collection(db, 'users'), where('phone', '==', phone));
+    const snap = await getDocs(q);
+
+    if (!snap.empty) {
+      // Phone found in seeded data - update that document with auth info
+      const docRef = snap.docs[0].ref;
+      const docId = snap.docs[0].id;
+      const seededData = snap.docs[0].data();
+
+      await setDoc(
+        docRef,
+        {
+          ...seededData,
+          auth_uid:            uid,
+          phone_verified:      true,
+          // PRESERVE existing verification_status if present, only set to 'pending' for new users
+          verification_status: seededData.verification_status || 'pending',
+          // Keep created_at from seeded data if exists
+          created_at:          seededData.created_at || serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      return { docId };
+    } else {
+      // Phone not found - throw error
+      throw new Error('Phone number not found in registered users. Please contact support.');
+    }
+  } catch (error) {
+    console.error('Error saving user to Firestore:', error);
+    throw error;
+  }
 }
 
-// ─── Get verification status ──────────────────────────────────────────────────
+// ─── Get user document ID by auth UID ─────────────────────────────────────────
+export async function getUserDocIdByAuthUid(authUid: string): Promise<string | null> {
+  try {
+    const q = query(collection(db, 'users'), where('auth_uid', '==', authUid));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      return snap.docs[0].id;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting user doc ID:', error);
+    return null;
+  }
+}
+
+// ─── Get verification status (corrected) ──────────────────────────────────────
 export async function getVerificationStatus(
   uid: string
 ): Promise<VerificationStatus | null> {
-  const snap = await getDoc(doc(db, 'users', uid));
-  if (!snap.exists()) return null;
-  return (snap.data()?.verification_status as VerificationStatus) ?? null;
+  try {
+    // uid here is Firebase Auth UID
+    // First find the document ID by auth_uid
+    const docId = await getUserDocIdByAuthUid(uid);
+    if (!docId) return null;
+
+    const snap = await getDoc(doc(db, 'users', docId));
+    if (!snap.exists()) return null;
+    return (snap.data()?.verification_status as VerificationStatus) ?? null;
+  } catch (error) {
+    console.error('Error getting verification status:', error);
+    return null;
+  }
 }
 
-// ─── Update verification status ───────────────────────────────────────────────
+// ─── Update verification status (corrected) ──────────────────────────────────
 export async function updateVerificationStatus(
   uid: string,
   status: VerificationStatus
 ): Promise<void> {
-  await setDoc(
-    doc(db, 'users', uid),
-    { verification_status: status, [`${status}_at`]: serverTimestamp() },
-    { merge: true }
-  );
+  try {
+    // uid here is Firebase Auth UID
+    // Find the actual document ID by auth_uid
+    const docId = await getUserDocIdByAuthUid(uid);
+    if (!docId) {
+      throw new Error('User document not found');
+    }
+
+    await setDoc(
+      doc(db, 'users', docId),
+      {
+        verification_status: status,
+        [`${status}_at`]: serverTimestamp(),
+        // Also update auth_uid to ensure it's linked
+        auth_uid: uid,
+      },
+      { merge: true }
+    );
+  } catch (error) {
+    console.error('Error updating verification status:', error);
+    throw error;
+  }
+}
+
+// ─── Session Management: Store login timestamp (corrected) ────────────────────
+export async function storeLoginTimestamp(uid: string): Promise<void> {
+  try {
+    // uid here is Firebase Auth UID
+    const docId = await getUserDocIdByAuthUid(uid);
+    if (!docId) {
+      console.warn('User document not found for storing login timestamp');
+      return;
+    }
+
+    await updateDoc(doc(db, 'users', docId), {
+      last_login: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error('Error storing login timestamp:', error);
+  }
+}
+
+// ─── Check if session has expired (> 1 day inactive) (corrected) ──────────────
+export async function isSessionExpired(uid: string): Promise<boolean> {
+  try {
+    // uid here is Firebase Auth UID
+    const docId = await getUserDocIdByAuthUid(uid);
+    if (!docId) return true;
+
+    const userDoc = await getDoc(doc(db, 'users', docId));
+    if (!userDoc.exists()) return true;
+
+    const lastLogin = userDoc.data()?.last_login;
+    if (!lastLogin) return false; // No login timestamp means first login, not expired
+
+    const lastLoginTime = lastLogin.toDate ? lastLogin.toDate().getTime() : lastLogin;
+    const currentTime = new Date().getTime();
+    const diffInHours = (currentTime - lastLoginTime) / (1000 * 60 * 60);
+
+    // 24 hours = 1 day
+    return diffInHours > 24;
+  } catch (error) {
+    console.error('Error checking session expiry:', error);
+    return false; // Default to NOT expired to not block users on network errors
+  }
 }

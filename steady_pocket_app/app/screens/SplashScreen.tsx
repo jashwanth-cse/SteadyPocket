@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,10 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { APP_NAME, APP_TAGLINE } from '../../services/constants';
 import { COLORS, TYPOGRAPHY, COMPONENTS } from '../theme';
 
-// A colorful custom spinner made of Animated Views to match the Google style 
+// A colorful custom spinner made of Animated Views to match the Google style
 const GoogleSpinner = () => {
   const rotation = useRef(new Animated.Value(0)).current;
 
@@ -42,14 +41,8 @@ const GoogleSpinner = () => {
 };
 
 export default function SplashScreen() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      router.replace('/app-tour');
-    }, 2500);
-    return () => clearTimeout(timer);
-  }, []);
+  // Note: Navigation is handled by the root layout (_layout.tsx)
+  // This component just displays the splash UI
 
   return (
     <View style={COMPONENTS.screen}>

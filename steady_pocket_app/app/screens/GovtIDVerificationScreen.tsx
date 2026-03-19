@@ -13,6 +13,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
 import { COLORS, TYPOGRAPHY, COMPONENTS } from '../theme';
+import { collection, query, where, getDocs, setDoc, doc, getDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { db, auth } from '../../services/firebase';
+import { updateVerificationStatus, getUserDocIdByAuthUid } from '../../services/authService';
 
 type IDType = 'Driving License' | 'Voter ID' | null;
 type Stage = 'selection' | 'camera' | 'verifying' | 'success';
@@ -25,6 +28,7 @@ export default function GovtIDVerificationScreen() {
 
   const [idType, setIdType] = useState<IDType>(null);
   const [stage, setStage] = useState<Stage>('selection');
+  const [isGeneratingPolicy, setIsGeneratingPolicy] = useState(false);
 
   // Animation values for cybersecurity sequence
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -64,6 +68,95 @@ export default function GovtIDVerificationScreen() {
     setTimeout(() => setVerificationText('Validating identity...'), 1000);
     setTimeout(() => setVerificationText('Matching with partner database...'), 2000);
     setTimeout(() => setStage('success'), 3000);
+  };
+
+  const generatePolicy = async () => {
+    try {
+      if (!auth.currentUser) {
+        router.replace('/');
+        return;
+      }
+      setIsGeneratingPolicy(true);
+      const uid = auth.currentUser.uid;
+
+      // Get the correct user document ID
+      const userDocId = await getUserDocIdByAuthUid(uid);
+      if (!userDocId) {
+        console.error('User document not found');
+        router.replace('/');
+        return;
+      }
+
+      // Check if an active policy already exists
+      const policiesRef = collection(db, 'policies');
+      const activePoliciesSnap = await getDocs(query(
+        policiesRef,
+        where('user_id', '==', userDocId),
+        where('status', '==', 'active')
+      ));
+
+      if (!activePoliciesSnap.empty) {
+        // Active policy exists, skip creation
+        await updateVerificationStatus(uid, 'fully_verified');
+        router.replace('/dashboard');
+        return;
+      }
+
+      // ──────────────────────────────────────────────────────────────────────
+      // NEW: Check for pending payment policy
+      // ──────────────────────────────────────────────────────────────────────
+      const pendingPoliciesSnap = await getDocs(query(
+        policiesRef,
+        where('user_id', '==', userDocId),
+        where('status', '==', 'pending')
+      ));
+      if (!pendingPoliciesSnap.empty) {
+        await updateVerificationStatus(uid, 'kyc_complete');
+        router.replace('/premium-payment');
+        return;
+      }
+
+      // Fetch weekly salary from user profile using correct document ID
+      const userRef = doc(db, 'users', userDocId);
+      const userSnap = await getDoc(userRef);
+      let weeklyIncome = 5000; // default fallback if data doesn't exist yet
+      if (userSnap.exists() && userSnap.data().weekly_salary) {
+        weeklyIncome = userSnap.data().weekly_salary;
+      }
+
+      // Calculate temporary logic
+      const premium = Math.round(weeklyIncome * 0.016);
+      const coverageLimit = Math.round(weeklyIncome * 0.75);
+      const riskScore = Number((Math.random() * (0.7 - 0.2) + 0.2).toFixed(2));
+      const policyId = `POL${Math.floor(Math.random() * 90000 + 10000)}`;
+
+      // Calculate dates
+      const now = new Date();
+      const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      // Save policy
+      await setDoc(doc(db, 'policies', policyId), {
+        policy_id: policyId,
+        user_id: userDocId,
+        weekly_income: weeklyIncome,
+        premium: premium,
+        coverage_limit: coverageLimit,
+        risk_score: riskScore,
+        coverage_start: Timestamp.fromDate(now),
+        coverage_end: Timestamp.fromDate(nextWeek),
+        status: 'pending', // Set to pending until payment
+        premium_paid: false,
+      });
+
+      await updateVerificationStatus(uid, 'kyc_complete');
+      router.replace('/premium-payment');
+    } catch (err) {
+      console.error('Failed to generate policy:', err);
+      // Still navigate so user isn't stuck
+      router.replace('/premium-payment');
+    } finally {
+      setIsGeneratingPolicy(false);
+    }
   };
 
   // ─── STAGE: Selection ────────────────────────────────────────────────────────
@@ -196,11 +289,14 @@ export default function GovtIDVerificationScreen() {
 
         <View style={[COMPONENTS.bottomCornerAction, { paddingHorizontal: 24 }]}>
           <TouchableOpacity
-            style={[COMPONENTS.buttonPrimary, { flex: 1, marginLeft: 0 }]}
-            onPress={() => router.replace('/')} // TODO: Navigate to Dashboard once created
+            style={[COMPONENTS.buttonPrimary, { flex: 1, marginLeft: 0 }, isGeneratingPolicy && { opacity: 0.7 }]}
+            onPress={generatePolicy}
+            disabled={isGeneratingPolicy}
             activeOpacity={0.85}
           >
-            <Text style={COMPONENTS.buttonPrimaryText}>Enter Platform →</Text>
+            <Text style={COMPONENTS.buttonPrimaryText}>
+              {isGeneratingPolicy ? 'Activating Policy...' : 'Enter Platform →'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

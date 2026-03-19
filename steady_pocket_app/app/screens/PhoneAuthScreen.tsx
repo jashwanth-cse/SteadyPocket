@@ -15,19 +15,19 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router';
 import type { ConfirmationResult } from 'firebase/auth';
 
-import FirebaseRecaptcha, { FirebaseRecaptchaRef } from '../components/FirebaseRecaptcha';
 import app from '../../services/firebase';
 
-import { sendOTP, verifyOTP, saveUserToFirestore } from '../../services/authService';
+import { sendOTP, verifyOTP, saveUserToFirestore, checkPhoneExists, storeLoginTimestamp, isSessionExpired, getVerificationStatus, type VerificationStatus } from '../../services/authService';
 import { APP_NAME } from '../../services/constants';
 import { COLORS, TYPOGRAPHY, COMPONENTS } from '../theme';
+import { useErrorHandler } from '../../hooks/useErrorHandler';
 
 const INDIA_PREFIX = '+91';
 
 export default function PhoneAuthScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const recaptchaRef = useRef<FirebaseRecaptchaRef>(null);
+  const { handleAndShowError } = useErrorHandler();
 
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phone, setPhone] = useState('');
@@ -67,27 +67,34 @@ export default function PhoneAuthScreen() {
     setLoading(true);
     try {
       const fullPhone = `${INDIA_PREFIX}${digits}`;
+
+      // 1. STRICT CHECK: Must be registered first
+      const phoneExists = await checkPhoneExists(fullPhone);
       
-      let verifier: any = undefined;
-      const refAny = recaptchaRef.current as any;
-      if (refAny?.applicationVerifier) {
-        verifier = refAny.applicationVerifier;
-      } else {
-        verifier = {
-          type: 'recaptcha',
-          verify: () => recaptchaRef.current?.verify() || Promise.reject(new Error('Recaptcha not initialized')),
-          _reset: () => recaptchaRef.current?.reset(),
-          clear: () => recaptchaRef.current?.reset(),
-          render: () => Promise.resolve(0),
-        };
+      if (!phoneExists) {
+        setError('This number is not registered as a Swiggy/Zomato delivery partner.');
+        setLoading(false);
+        return;
       }
 
-      const result = await sendOTP(fullPhone, verifier);
+      // 2. SEND OTP: Only if registered
+      // Omit verifier to use the silent mock verifier for test numbers
+      const result = await sendOTP(fullPhone);
+
       setConfirmationResult(result);
       setStep('otp');
       startResendTimer();
     } catch (e: any) {
-      setError(e?.message ?? 'Failed to send verification code. Please try again.');
+      console.error('[PhoneAuth] Error:', e);
+      
+      // Handle Firebase specific errors professionally
+      if (e.code === 'auth/network-request-failed' || e.message?.toLowerCase().includes('network')) {
+        setError('Network error. Please check your connection and try again.');
+      } else if (e.code === 'auth/too-many-requests') {
+        setError('Too many attempts. Please try again later.');
+      } else {
+        setError('Unable to send code. Please check your connection and try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -108,9 +115,23 @@ export default function PhoneAuthScreen() {
       const uid = credential.user.uid;
       const fullPhone = `${INDIA_PREFIX}${phone}`;
       await saveUserToFirestore(uid, fullPhone);
-      router.replace('/swiggy-id-upload');
+
+      // Store login timestamp for session management
+      await storeLoginTimestamp(uid);
+
+      // Check verification status and redirect accordingly
+      const status = await getVerificationStatus(uid);
+      const STATUS_ROUTE: Record<VerificationStatus, string> = {
+        pending:        '/swiggy-id-upload',
+        kyc_complete:   '/dashboard',
+        selfie_complete:'/govt-id-verification',
+        fully_verified: '/dashboard',
+      };
+      const targetRoute = STATUS_ROUTE[status as VerificationStatus] ?? '/swiggy-id-upload';
+      router.replace(targetRoute as any);
     } catch (e: any) {
-      setError('Invalid code. Please check and try again.');
+      handleAndShowError(e, '[PhoneAuth] Verify OTP');
+      setError('Unable to verify code. Please check your connection and try again.');
       setOtp(['', '', '', '', '', '']); // Clear on error
       otpRefs.current[0]?.focus();
     } finally {
@@ -176,7 +197,7 @@ export default function PhoneAuthScreen() {
             </Text>
             <Text style={TYPOGRAPHY.body}>
               {step === 'phone'
-                ? "Enter your mobile number to get started."
+                ? "Enter your mobile number you have used to signup to your Swiggy/Zomato delivery app."
                 : `We've sent a 6-digit code to\n${INDIA_PREFIX} ${phone}`}
             </Text>
           </View>
@@ -205,15 +226,17 @@ export default function PhoneAuthScreen() {
                 />
               </View>
 
-              {/* Error */}
-              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+              {/* Loading Spinner */}
+              {loading && (
+                <View style={styles.spinnerContainer}>
+                  <ActivityIndicator color={COLORS.secondary} size="large" />
+                </View>
+              )}
 
-              {/* Trust & Terms */}
-              <Text style={styles.termsText}>
-                Protected by reCAPTCHA and subject to the{' '}
-                <Text style={styles.termsLink}>Privacy Policy</Text> and{' '}
-                <Text style={styles.termsLink}>Terms of Service</Text>.
-              </Text>
+              {/* Error */}
+              {error ? <Text style={[styles.errorText, error.includes('⚠️') && styles.warningText]}>{error}</Text> : null}
+
+
 
               {/* Action Buttons (Google Style Bottom Right) */}
               <View style={COMPONENTS.bottomCornerAction}>
@@ -227,6 +250,8 @@ export default function PhoneAuthScreen() {
                     : <Text style={COMPONENTS.buttonPrimaryText}>Next</Text>}
                 </TouchableOpacity>
               </View>
+
+
             </View>
           )}
 
@@ -279,12 +304,6 @@ export default function PhoneAuthScreen() {
               </View>
             </View>
           )}
-
-          {/* Invisible reCAPTCHA anchor */}
-          <FirebaseRecaptcha
-            ref={recaptchaRef}
-            baseUrl={`https://${app.options.authDomain}`}
-          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -334,6 +353,27 @@ const styles = StyleSheet.create({
     color: COLORS.error,
     marginTop: 8,
     fontWeight: '500',
+  },
+
+  // Spinner container
+  spinnerContainer: {
+    marginTop: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 60,
+  },
+  
+  // Info text
+  infoText: {
+    fontSize: 11,
+    color: COLORS.success,
+    marginTop: 4,
+    fontWeight: '400',
+  },
+
+  // Warning text
+  warningText: {
+    color: '#FF9800',
   },
 
   // Policies & Notes
