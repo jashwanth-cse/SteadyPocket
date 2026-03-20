@@ -480,24 +480,13 @@ Steady Pocket becomes a **trust-first, intelligence-driven parametric protection
 
 # 🧠 System Architecture
 
-```mermaid
-graph TD
+<p align="center">
+  <img src="docs/architecture-diagram.png" width="900"/>
+</p>
+<p align="center">
+<b>End-to-end architecture showing AI-driven policy engine, fraud detection, and real-time payout system</b>
+</p>
 
-A[Mobile App]
-B[Node Gateway]
-C[FastAPI AI Engine]
-D[ML Model]
-E[Firestore]
-F[External APIs]
-G[Admin Dashboard]
-
-A --> B
-B --> C
-C --> D
-C --> F
-C --> E
-G --> E
-```
 
 ---
 
