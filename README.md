@@ -89,7 +89,7 @@ No claim filing required.
 <p align="center">
 <b>Seamless experience • Real-time payouts • Smart risk alerts</b>
 </p>
-
+A mobile-first platform is chosen as delivery partners operate entirely through smartphones, enabling real-time tracking, sensor-based verification, and instant payout notifications.
 ---
 
 # 📱 App Workflow
@@ -189,34 +189,51 @@ Payout ≈ 70–80% of daily income
 
 ---
 
-# 🤖 AI / ML System
+# 🔄 AI Integration in System Workflow
 
-## Purpose
-- premium calculation  
-- coverage generation  
-- risk scoring  
+Steady Pocket integrates AI directly into the core decision pipeline rather than using it as a standalone module.
 
----
+### End-to-End Flow
 
-## Inputs
-- weekly earnings  
-- delivery activity  
+1️⃣ User completes verification  
+2️⃣ System fetches weekly earnings + activity data  
+3️⃣ Feature Engine aggregates:
+- income patterns  
 - location risk  
-- environmental conditions  
+- environmental signals  
 
----
-
-## Output
+4️⃣ ML Model processes inputs and outputs:
 - premium  
 - coverage limit  
 - risk score  
 
----
-
-## Model
-**Gradient Boosting (XGBoost)** for fast, accurate tabular predictions.
+5️⃣ Policy is generated and stored in Firestore  
 
 ---
+
+### During Disruption
+
+1️⃣ External APIs detect disruption (rain / strike)  
+2️⃣ System validates user presence using multi-signal verification  
+3️⃣ Fraud Detection Model evaluates risk  
+
+Decision:
+
+- Low risk → payout triggered instantly  
+- Medium risk → conditional escrow  
+- High risk → blocked + flagged  
+
+---
+
+### Continuous Learning Loop
+
+The system improves over time by:
+
+- learning from past fraud cases  
+- updating risk thresholds  
+- adapting to new attack patterns  
+
+This ensures the platform becomes **more accurate and resilient with usage**.
 
 # 🛡 Adversarial Defense & Anti-Spoofing Strategy
 
@@ -365,7 +382,40 @@ Cloud: GCP
 
 ---
 
+# 🛠 Development Plan
 
+Steady Pocket is built using a modular, production-oriented architecture:
+
+### Phase 1 (MVP)
+- Rider onboarding and verification  
+- Policy generation engine  
+- Payment simulation  
+- Wallet system  
+- Basic payout engine  
+
+---
+
+### Phase 2 (AI Integration)
+- ML model for premium prediction  
+- Fraud detection system  
+- risk scoring engine  
+
+---
+
+### Phase 3 (Scaling & Automation)
+- real-time disruption detection  
+- automated payout engine  
+- admin monitoring dashboard  
+- cloud scheduler integration  
+
+---
+
+### Deployment Strategy
+- Backend services on Google Cloud Run  
+- AI models via Vertex AI  
+- Firebase for real-time data and authentication  
+
+This phased approach ensures rapid MVP delivery while enabling scalable production deployment.
 
 # 📜 License
 
