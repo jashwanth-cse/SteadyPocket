@@ -89,8 +89,9 @@ No claim filing required.
 <p align="center">
 <b>Seamless experience • Real-time payouts • Smart risk alerts</b>
 </p>
----
+
 A mobile-first platform is chosen as delivery partners operate entirely through smartphones, enabling real-time tracking, sensor-based verification, and instant payout notifications.
+
 ---
 
 # 📱 App Workflow
