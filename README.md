@@ -24,61 +24,62 @@
 
 # 🌍 Overview
 
-**Steady Pocket** is an **AI-powered parametric income protection platform** designed for **gig delivery workers**, specifically **Swiggy and Zomato partners**.
+**Steady Pocket** is an **AI-powered parametric income protection platform** for **gig delivery workers (Swiggy & Zomato partners)**.
 
-Gig workers depend on **consistent daily earnings**, but disruptions often reduce their ability to work.
+Gig workers depend on daily earnings, but real-world disruptions reduce their ability to work.
 
-Common disruptions include:
+Steady Pocket automatically detects these disruptions and **provides instant payouts without claims**.
 
-• 🌧 Heavy Rain  
-• 🔥 Heatwaves  
-• 🚧 Strikes & Protests  
-• 📵 Internet Shutdowns  
-• 🚔 Traffic Restrictions  
-• 🌫 Severe Pollution Alerts  
-
-Steady Pocket automatically detects these events and **credits compensation instantly**.
-
-> ⚡ **No claims. No paperwork. Automatic payouts.**
+> ⚡ No claims. No paperwork. Automatic payouts.
 
 ---
 
 # 🎯 Problem Statement
 
-Delivery partners rely on **daily earnings**, but external disruptions reduce delivery opportunities.
+Delivery partners face **income instability** due to:
 
-These disruptions cause:
+- weather disruptions  
+- strikes and road blocks  
+- unpredictable working conditions  
 
-- Reduced working hours
-- Reduced delivery availability
-- Income instability
+Traditional insurance fails because it:
 
-Traditional insurance systems fail because they:
+- requires manual claims  
+- has delayed payouts  
+- is not designed for gig economy dynamics  
 
-- Require manual claim filing
-- Have long processing times
-- Are not designed for gig workers
+---
 
-Steady Pocket solves this using **AI-powered parametric protection**.
+# 👤 Target Users (Persona Understanding)
+
+### 🚴 Full-Time Rider
+- Works daily for primary income  
+- Highly sensitive to disruptions  
+
+### 🚴 Part-Time Rider
+- Income fluctuates weekly  
+- Needs flexible premium pricing  
+
+### 🚴 High-Risk Urban Rider
+- Works in dense, disruption-prone zones  
+- Faces frequent income interruptions  
 
 ---
 
 # 💡 Solution
 
-Steady Pocket introduces **automatic parametric payouts** triggered by real-world disruptions.
+Steady Pocket provides **parametric protection**:
 
-Workflow:
-
-1️⃣ External event occurs (rain, strike, etc.)  
-2️⃣ System verifies disruption using external APIs  
-3️⃣ Rider presence in affected zone is verified  
-4️⃣ Compensation is automatically credited  
+1️⃣ Detect disruption via real-world data  
+2️⃣ Verify rider presence  
+3️⃣ Trigger payout instantly  
 
 No claim filing required.
 
 ---
 
 # 📱 Rider App
+
 <p align="center">
   <img src="docs/app1.jpeg" width="300"/>
   <img src="docs/app3.jpeg" width="300" />
@@ -86,556 +87,472 @@ No claim filing required.
 </p>
 
 <p align="center">
-  <b>Seamless rider experience • Real-time payouts • Smart risk alerts</b>
+<b>Seamless experience • Real-time payouts • Smart risk alerts</b>
 </p>
 
-The Steady Pocket mobile app allows delivery partners to:
-
-• verify identity  
-• activate protection plans  
-• view payouts  
-• monitor disruptions  
-• track coverage
+A mobile-first platform is chosen as delivery partners operate entirely through smartphones, enabling real-time tracking, sensor-based verification, and instant payout notifications.
 
 ---
 
-# 📱 App Flow
+# 📱 App Workflow
 
-### 1️⃣ Rider Verification
-
-Users verify their identity through a secure onboarding flow.
-
-Steps include:
-
-- Phone number verification
-- Swiggy / Zomato partner ID upload
-- Face verification
-- Government ID verification
-
-This ensures only **legitimate delivery partners** can access protection.
+### 1️⃣ Verification
+- Phone authentication  
+- Partner ID verification  
+- Live selfie + Govt ID  
 
 ---
 
 ### 2️⃣ Dynamic Policy Generation
-
-Once verified, the system automatically generates a **weekly protection policy**.
-
-Policy values depend on:
-
-- weekly earnings
-- work type (full-time / part-time)
-- location risk
-- environmental conditions
-
-Policies are stored in **Firestore** and refreshed weekly.
+Policies are generated weekly based on:
+- income  
+- work type  
+- location risk  
 
 ---
 
-### 3️⃣ Dashboard
-
-The rider dashboard shows:
-
-- Protected weekly income
-- Weekly premium
-- Coverage limit
-- Active policy status
-- Risk alerts
-
-Example:
-
-```
-Protected Weekly Income: ₹6200  
-Weekly Premium: ₹99  
-Coverage Limit: ₹4650
-```
+### 3️⃣ Premium Activation
+Users activate protection via weekly premium  
+(simulated UPI payment for MVP)
 
 ---
 
-### 4️⃣ Coverage Details
+### 4️⃣ Dashboard
+Displays:
+- protected income  
+- premium  
+- coverage  
+- policy status  
 
-Riders can view full protection details including:
-
-- coverage period
-- disruption triggers
-- premium calculation
-- payout eligibility
-
----
-
-### 5️⃣ Payout History
-
-Users can see all automatic payouts triggered by disruptions.
-
-Example:
-
-```
-Rain Disruption – Chennai
-₹420 credited
-```
+Updated dynamically using ML.
 
 ---
 
-### 6️⃣ Risk Alerts
+### 5️⃣ Coverage Details
+Shows:
+- policy duration  
+- eligible disruption triggers  
 
-The system alerts riders about upcoming disruptions.
+---
 
-Example:
+### 6️⃣ Wallet (My Pocket)
+- in-app wallet for payouts  
+- instant credit on disruptions  
 
-```
-🌧 Heavy rain detected in your zone
-Potential payout may be triggered
-```
+---
+
+### 7️⃣ Payout Engine
+- triggered via Cloud Scheduler  
+- validated via AI system  
+- credited automatically  
+
+---
+
+### 8️⃣ Payout History
+- full transparency of transactions  
+
+---
+
+### 9️⃣ Profile
+- KYC status  
+- risk score  
+- user details  
 
 ---
 
 # ⚙ Core Concept: Parametric Protection
 
-Steady Pocket eliminates traditional claim processes.
-
-Payouts are triggered when **predefined conditions occur**.
-
 | Event | Trigger |
 |------|--------|
-| Heavy Rain | Rainfall above threshold |
-| Heatwave | IMD heatwave alert |
-| Strike | News disruption detection |
-| Road Closure | Traffic API incidents |
-| Internet Shutdown | Government restrictions |
-| Air Pollution | Severe AQI levels |
+| Rain | Rainfall threshold |
+| Heatwave | IMD alerts |
+| Strike | News detection |
+| Traffic | API signals |
 
-If the rider is in the **affected zone → payout triggered automatically**.
+If user is in affected zone → payout triggered automatically.
 
 ---
 
-# 💰 Weekly Premium Model
-
-Premiums are calculated dynamically.
+# 💰 Premium Model
 
 ```
-Premium = (Weekly Earnings × Base Rate) + Risk Coefficient
+Premium = (Weekly Earnings × Base Rate) + Risk Factor
 ```
 
-Base Rate:
-
-**1.5% – 2% of weekly income**
-
-Example:
-
-Weekly income = ₹6000  
-
-Premium ≈ **₹90 – ₹108**
+Base Rate: **1.5% – 2%**
 
 ---
 
-# 💸 Dynamic Payout Model
+# 💸 Payout Model
 
-Payout = **80% of average daily earnings**
-
-Example:
-
-Daily earnings = ₹800  
-
-Rain disruption payout ≈ **₹640**
-
-Typical payouts range between:
-
-**₹300 – ₹500 per event**
-
----
-
-# 🌐 Data Sources for Parametric Triggers
-
-| Data | Source | Purpose |
-|-----|------|------|
-| Weather Data | Tomorrow.io API | Rain detection |
-| Traffic Data | TomTom API | Road disruptions |
-| News Data | NewsData.io | Strike detection |
-| Rider Location | Mobile GPS | Zone verification |
-
----
-
-# 🤖 Machine Learning Engine
-
-Steady Pocket uses an ML model to generate **dynamic insurance policies**.
-
-### Model Purpose
-
-Predict:
-
-- weekly premium
-- coverage limit
-- rider risk score
-
----
-
-### ML Inputs
-
-The model receives structured features such as:
-
-- weekly earnings
-- delivery activity
-- working hours
-- income volatility
-- city risk score
-- environmental risk factors
-
-Example input:
-
-```json
-{
- "weekly_income_last_week": 6200,
- "deliveries_last_week": 112,
- "working_hours_last_week": 48,
- "zone_risk_score": 0.55
-}
+```
+Payout ≈ 70–80% of daily income
 ```
 
 ---
 
-### ML Output
+# 🔄 AI Integration in System Workflow
 
-```json
-{
- "recommended_premium": 102,
- "coverage_limit": 4800,
- "risk_score": 0.61
-}
-```
+Steady Pocket integrates AI directly into the core decision pipeline rather than using it as a standalone module.
 
----
+### End-to-End Flow
 
+1️⃣ User completes verification  
+2️⃣ System fetches weekly earnings + activity data  
+3️⃣ Feature Engine aggregates:
+- income patterns  
+- location risk  
+- environmental signals  
 
-### Model Type
+4️⃣ ML Model processes inputs and outputs:
+- premium  
+- coverage limit  
+- risk score  
 
-
-**XGBoost Gradient Boosting Regressor**
-
-Reasons:
-
-- High accuracy for tabular data
-- Fast training
-- Robust predictions
+5️⃣ Policy is generated and stored in Firestore  
 
 ---
 
-# 🛡 Fraud Detection System
+### During Disruption
 
-To prevent false payouts, Steady Pocket includes a fraud detection system.
+1️⃣ External APIs detect disruption (rain / strike)  
+2️⃣ System validates user presence using multi-signal verification  
+3️⃣ Fraud Detection Model evaluates risk  
 
-Detection techniques include:
+Decision:
 
-- GPS verification
-- Wi-Fi signal validation
-- cell tower triangulation
-- anomaly detection models
+- Low risk → payout triggered instantly  
+- Medium risk → conditional escrow  
+- High risk → blocked + flagged  
 
-Suspicious activities include:
+---
 
-- GPS spoofing
-- duplicate accounts
-- payout abuse
-- identity mismatch
+### Continuous Learning Loop
 
-Alerts are stored in the **fraud_alerts collection** for admin review.
+The system improves over time by:
+
+- learning from past fraud cases  
+- updating risk thresholds  
+- adapting to new attack patterns  
+
+This ensures the platform becomes **more accurate and resilient with usage**.
+
+# 🛡 Adversarial Defense & Anti-Spoofing Strategy
+
+To defend against coordinated GPS spoofing attacks, Steady Pocket implements a **multi-layer "Truth-of-Source" verification system**.  
+Instead of trusting GPS alone, the system validates **how the location is generated using physical, behavioral, and network signals**.
+
+---
+
+## 1️⃣ Differentiation: Genuine Worker vs Spoofed Actor
+
+The platform distinguishes real users from bad actors using **multi-signal validation + behavioral intelligence**.
+
+### 🔍 Truth-of-Source Analysis
+
+#### ✅ Genuine Worker (Real Scenario)
+- Noisy and fluctuating signals  
+- Weak or unstable network due to weather  
+- Continuous micro-movements (walking, riding, vibrations)  
+- Realistic movement history before disruption  
+- Environmental inconsistency (signal drops, pressure changes)
+
+#### ❌ Spoofed Actor (Fraud Scenario)
+- Clean, static signals  
+- Stable home Wi-Fi or broadband IP  
+- No motion (device idle on a surface)  
+- Perfect GPS coordinates without drift  
+- No correlation with environmental conditions  
+
+---
+
+### ⚙ Behavioral "Dead Reckoning" (Physics Check)
+
+We validate **physical presence using device sensors**:
+
+- 📱 Accelerometer (motion detection)  
+- 🚶 Step Counter / Pedometer  
+- 📡 Device activity signals  
+
+#### Logic:
+
+If:
+- GPS shows presence in a disruption zone  
+AND  
+- Device shows **no motion for extended duration (e.g., 60 minutes)**  
+
+→ User is flagged as **high-risk (likely spoofing)**  
+
+This ensures **physics-based validation instead of relying solely on GPS coordinates**.
+
+---
+
+### 🚫 Mock Location Detection
+
+We leverage native OS-level security signals:
+
+- Android mock location detection (Developer Options)  
+- iOS location integrity checks  
+- Emulator / developer mode detection  
+
+#### Logic:
+
+If mock location is enabled or detected:
+
+→ User is immediately classified as **high-risk**
+
+This acts as a **lightweight but highly effective first-line defense** against spoofing.
+
+---
+
+## 2️⃣ Data Intelligence Beyond GPS
+
+Steady Pocket analyzes **multi-dimensional data signals** to validate authenticity.
+
+---
+
+### 📡 Network & Location Signals
+
+- Cell tower triangulation  
+- Wi-Fi BSSID fingerprinting  
+- IP address consistency  
+- Google Geolocation API (Wi-Fi + cell-based location)
+
+---
+
+### 📱 Device Integrity Signals
+
+- Device ID consistency  
+- Rooted / emulator detection  
+- App tampering detection  
+- Device boot time vs location timestamp validation  
+
+#### Example:
+
+If:
+- Location timestamp does not align with device uptime  
+
+→ Potential spoofing behavior detected  
+
+---
+
+### 🌦 Environmental Correlation
+
+- Weather API vs user location consistency  
+- Signal attenuation during storms  
+- Optional: barometric pressure correlation  
+
+---
+
+### 📊 Behavioral Signals
+
+- Sudden clustering of users in same zone  
+- Identical movement patterns across accounts  
+- Repeated payouts without delivery activity  
+- Unrealistic travel speeds  
+
+---
+
+### 🔗 Firebase-Based Real-Time Intelligence
+
+- Firestore / Realtime DB → live sensor + location sync  
+- Firebase Presence → user activity tracking  
+- GeoFire → geo-based clustering  
+
+This enables **real-time fraud detection across multiple users simultaneously**.
+
+---
+
+## 3️⃣ Coordinated Fraud (Syndicate) Detection
+
+To prevent large-scale organized attacks:
+
+- Detect clusters sharing:
+  - same IP / Wi-Fi BSSID  
+  - identical movement patterns  
+- Identify synchronized payout triggers  
+- Monitor abnormal payout spikes in specific zones  
+
+### Response:
+
+- Pause payouts for suspicious clusters  
+- Flag users for admin review  
+- Highlight anomalies in admin dashboard  
+
+---
+
+## 4️⃣ Immediate "Kill Switch" Strategy
+
+Every payout request passes through a **Cloud Function validation layer**:
+
+- Cross-check multi-signal data  
+- Validate event authenticity  
+- Run fraud scoring model  
+
+---
+
+### 📸 Proof of Presence (On-Demand Verification)
+
+If a user is flagged:
+
+They must provide:
+
+- live photo or short video  
+- metadata (EXIF) validation  
+
+Using:
+
+- Firebase Storage  
+- Cloud Vision API  
+
+This ensures the environment matches a **real disruption scenario**.
+
+---
+
+## 5️⃣ UX Balance: Conditional Escrow Workflow
+
+To avoid penalizing genuine users, Steady Pocket uses a **tiered decision system**.
+
+| Status      | Trigger Condition | Action |
+|------------|-----------------|--------|
+| ✅ Verified | Strong multi-signal match | Instant payout |
+| ⚠ Flagged  | Signal mismatch | Held for review |
+| ❌ Rejected | Strong fraud indicators | Block + investigation |
+
+---
+
+### 🧠 Fair Play Mechanism (Offline Resilience)
+
+During poor connectivity (e.g., storms):
+
+- App switches to **Offline Logging Mode**
+- Captures encrypted sensor snapshots:
+  - cell ID  
+  - accelerometer  
+  - network signals  
+
+When connection restores:
+
+- Data syncs to Firebase  
+- AI reconstructs a **sensor timeline**
+
+If consistent with real conditions:
+
+→ payout is **approved retroactively**
+
+---
+
+## 🎯 Outcome
+
+This system ensures:
+
+✔ Strong defense against GPS spoofing  
+✔ Detection of coordinated fraud rings  
+✔ Multi-signal real-time validation  
+✔ Fair handling of genuine users  
+✔ Production-ready resilience under adversarial conditions  
+
+Steady Pocket becomes a **trust-first, intelligence-driven parametric protection system**.
 
 ---
 
 # 🖥 Admin Monitoring Platform
+
 <p align="center">
   <img src="docs/web1.png" width="500"/>
   <img src="docs/web2.png" width="500"/>
 </p>
 
 <p align="center">
-  <b>Centralized monitoring of users, payouts, and fraud detection</b>
+<b>Real-time monitoring • Fraud detection • System control</b>
 </p>
 
-Steady Pocket includes a **separate admin website** used by platform operators.
-
-This system monitors:
-
-- users
-- policies
-- payouts
-- fraud alerts
-- system activity
-
-The admin platform connects directly to the same **Firestore database** used by the mobile app.
-
 ---
 
-# 🧭 Admin Dashboard Features
+## Features
 
-### Platform Overview
-
-Displays:
-
-- total users
-- active policies
-- total payouts
-- fraud alerts
-
----
-
-### Rider Management
-
-Admins can view rider profiles including:
-
-- verification status
-- policy details
-- payout history
-- fraud risk score
-
-Admins can take actions such as:
-
-- suspend account
-- ban user
-- mark for review
-
----
-
-### Policy Monitoring
-
-Admins can inspect all generated policies including:
-
-- premium values
-- coverage limits
-- risk scores
-
-This helps monitor the ML model behavior.
-
----
-
-### Payout Monitoring
-
-Track disruption events and payouts.
-
-Example:
-
-```
-Rain Event – Chennai
-Affected Riders: 320
-Total Payout: ₹2,10,000
-```
-
----
-
-### Fraud Monitoring
-
-The system automatically generates alerts for suspicious activities such as:
-
-- GPS mismatch
-- duplicate accounts
-- unusual payout patterns
-
-Admins can investigate and take action.
+- user monitoring  
+- policy tracking  
+- payout analytics  
+- fraud detection  
 
 ---
 
 # 🧠 System Architecture
 
-```mermaid
-graph TD
+<p align="center">
+  <img src="docs/architecture-diagram.png" width="900"/>
+</p>
+<p align="center">
+<b>End-to-end architecture showing AI-driven policy engine, fraud detection, and real-time payout system</b>
+</p>
 
-A[📱 Mobile App - React Native]
-B[🌐 Node.js Gateway]
-C[🤖 FastAPI AI Engine]
-D[📊 ML Premium Model]
-E[🔥 Firebase Firestore]
-F[🌦 Weather APIs]
-G[📰 News APIs]
-H[🚧 Traffic APIs]
-I[🖥 Admin Monitoring Website]
-
-A --> B
-B --> C
-C --> D
-C --> F
-C --> G
-C --> H
-C --> E
-I --> E
-```
-
----
-
-# 🧭 System Workflow
-
-```mermaid
-flowchart LR
-
-A[Disruption Event]
-B[External APIs]
-C[AI Risk Engine]
-D[Trigger Verification]
-E[Rider Location Validation]
-F[Automatic Payout]
-
-A --> B
-B --> C
-C --> D
-D --> E
-E --> F
-```
 
 ---
 
 # ⭐ Key Features
 
-✔ Parametric insurance model  
 ✔ AI-powered dynamic premiums  
-✔ Automatic disruption detection  
-✔ Real-time payouts  
-✔ Fraud detection system  
-✔ Admin monitoring platform  
-✔ Risk alerts for riders  
+✔ Automatic payouts  
+✔ Fraud-resistant system  
+✔ Real-time monitoring  
+✔ Admin dashboard  
 
 ---
 
-# ➕ Additional Features
+# 🧰 Tech Stack
 
-## 💬 AI Chatbot
-
-In-app chatbot helps riders:
-
-- understand policies
-- check payout status
-- ask coverage questions
-
----
-
-## 👥 Referral Program
-
-Users can invite other delivery partners.
-
-Rewards may include:
-
-- premium discounts
-- bonus coverage
-- referral credits
-
----
-
-# 🧰 Technology Stack
-
-### 📱 Mobile App
-React Native (Expo)
-
-### 🌐 Backend
-Node.js Gateway
-
-### 🤖 AI Backend
-Python + FastAPI
-
-### 🧠 Machine Learning
-XGBoost
-
-### 🔥 Database
-Firebase Firestore
-
-### 🖥 Admin Platform
-Next.js + Node.js
-
-### ☁ Cloud Infrastructure
-Google Cloud Platform
-
-Services used:
-
-- Vertex AI
-- Cloud Run
-- Cloud Functions
-- Firebase Hosting
-
----
-
-# 📂 Project Structure
-
-```
-steady-pocket
-│
-├── mobile-app
-│   ├── screens
-│   ├── components
-│   └── navigation
-│
-├── backend
-│   └── Node.js gateway
-│
-├── ai-engine
-│   └── FastAPI ML services
-│
-├── admin-dashboard
-│   └── Next.js monitoring platform
-│
-├── docs
-│   ├── screenshots
-│   ├── diagrams
-│   └── demo gifs
-│
-└── README.md
-```
-
----
-
-# 📈 Development Roadmap
-
-- [x] Research and concept validation  
-- [x] Architecture design  
-- [x] Rider onboarding system  
-- [x] Policy engine  
-- [x] Dashboard and coverage UI  
-- [ ] ML premium engine  
-- [ ] Fraud detection automation  
-- [ ] Admin monitoring platform  
-- [ ] Deployment on Google Cloud  
+Mobile: React Native  
+Backend: Node.js  
+AI: FastAPI  
+DB: Firebase  
+Cloud: GCP  
 
 ---
 
 # 🌍 Impact
 
-Steady Pocket aims to improve **financial stability for gig workers**.
-
-Benefits include:
-
-• instant compensation  
-• no paperwork  
-• fair dynamic pricing  
-• protection from unpredictable disruptions  
+- financial stability for gig workers  
+- instant compensation  
+- zero-claim experience  
 
 ---
 
-# ⚙ Installation
+# 🛠 Development Plan
 
-Clone repository
+Steady Pocket is built using a modular, production-oriented architecture:
 
-```
-git clone https://github.com/your-username/steady-pocket
-cd steady-pocket
-```
-
-Install dependencies
-
-```
-npm install
-```
-
-Start development server
-
-```
-npm start
-```
+### Phase 1 (MVP)
+- Rider onboarding and verification  
+- Policy generation engine  
+- Payment simulation  
+- Wallet system  
+- Basic payout engine  
 
 ---
 
-# 🤝 Contributing
-
-1. Fork the repository  
-2. Create a feature branch  
-3. Commit changes  
-4. Submit a pull request  
+### Phase 2 (AI Integration)
+- ML model for premium prediction  
+- Fraud detection system  
+- risk scoring engine  
 
 ---
+
+### Phase 3 (Scaling & Automation)
+- real-time disruption detection  
+- automated payout engine  
+- admin monitoring dashboard  
+- cloud scheduler integration  
+
+---
+
+### Deployment Strategy
+- Backend services on Google Cloud Run  
+- AI models via Vertex AI  
+- Firebase for real-time data and authentication  
+
+This phased approach ensures rapid MVP delivery while enabling scalable production deployment.
 
 # 📜 License
 
-This project is developed for **research and hackathon purposes**.
+Hackathon project

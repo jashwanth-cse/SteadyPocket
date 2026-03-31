@@ -4,7 +4,6 @@ from fastapi import APIRouter, HTTPException
 from services.firestore_service import (
     get_active_policies, 
     get_user_location, 
-    get_user_fcm_token,
     get_user_verification_status,
     create_event_record,
     get_active_event,
@@ -12,7 +11,6 @@ from services.firestore_service import (
     trigger_payout_transaction
 )
 from services.weather_service import get_weather_data
-from services.notification_service import send_payout_notification
 from utils.logger import logger
 
 router = APIRouter()
@@ -75,17 +73,11 @@ async def check_disruptions():
                     )
                     
                     if result["status"] == "success":
-                        fcm_token = get_user_fcm_token(user_id)
-                        notification_sent = False
-                        if fcm_token:
-                            notification_sent = send_payout_notification(fcm_token, payout_amount, location)
-                        
                         payouts_triggered.append({
                             "user_id": user_id,
                             "status": "payout_triggered",
                             "payout_id": result["payout_id"],
-                            "event_id": event_id,
-                            "notification_sent": notification_sent
+                            "event_id": event_id
                         })
                     elif result["status"] == "skipped":
                         logger.info({"event": "payout_skipped", "user_id": user_id, "reason": "already_paid_for_event", "event_id": event_id})

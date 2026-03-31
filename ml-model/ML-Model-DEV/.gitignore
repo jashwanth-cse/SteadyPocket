@@ -1,0 +1,13 @@
+.dockerignore
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.local
+.env.*.local
+venv/
+.venv/
+config/gcp-service-account.json
+*.log
+!.env.example

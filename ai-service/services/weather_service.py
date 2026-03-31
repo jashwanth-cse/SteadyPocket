@@ -13,7 +13,7 @@ def get_weather_data(location_name):
     if TOMORROW_API_KEY == "your_tomorrow_io_api_key_here" or os.getenv("APP_MODE") == "dev":
         # Simulate some rain for specific cities or just return a default
         logger.info({"event": "weather_mock_used", "location": location_name})
-        if "Hyderabad" in location_name or "Chennai" in location_name:
+        if "Bangalore" in location_name or "Chennai" in location_name:
             return 2.5 # Simulated rain
         return 0.0
 

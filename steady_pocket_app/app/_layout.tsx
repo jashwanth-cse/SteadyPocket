@@ -14,7 +14,7 @@
 
 import React, { useEffect, useState } from "react";
 import { StyleSheet } from "react-native";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Stack, useRouter, useSegments, useRootNavigationState } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -56,8 +56,10 @@ const FIRST_TIME_FLAG = "STEADY_POCKET_FIRST_TIME";
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
+  const rootNavigationState = useRootNavigationState();
 
   const [appState, setAppState] = useState<AppState>("splash");
+  const [targetRoute, setTargetRoute] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
 
   /* ---------------------------------------------------------------------- */
@@ -98,16 +100,8 @@ export default function RootLayout() {
             }
           }
 
+          setTargetRoute(STATUS_ROUTE[status] || "/swiggy-id-upload");
           setAppState("authenticated");
-          
-          // Navigation logic
-          const targetRoute = STATUS_ROUTE[status] || "/swiggy-id-upload";
-          const currentRoute = "/" + segments.join("/");
-
-          // Only redirect if we are at the root or explicitly forbidden from the current route
-          if (currentRoute === "/" || currentRoute === "/splash" || currentRoute === "/phone-auth") {
-            router.replace(targetRoute as any);
-          }
         }
       } catch (err) {
         console.error("[Layout] Init failed:", err);
@@ -126,14 +120,19 @@ export default function RootLayout() {
   /* ---------------------------------------------------------------------- */
 
   useEffect(() => {
-    if (!isReady) return;
+    if (!isReady || !rootNavigationState?.key) return;
 
     if (appState === "app-tour") {
       router.replace("/app-tour");
     } else if (appState === "unauthenticated") {
       router.replace("/phone-auth");
+    } else if (appState === "authenticated" && targetRoute) {
+      const currentRoute = "/" + segments.join("/");
+      if (currentRoute === "/" || currentRoute === "/splash" || currentRoute === "/phone-auth") {
+        router.replace(targetRoute as any);
+      }
     }
-  }, [appState, isReady]);
+  }, [appState, isReady, targetRoute, segments, rootNavigationState?.key]);
 
   /* ---------------------------------------------------------------------- */
   /* Router Layout with Splash Overlay */
