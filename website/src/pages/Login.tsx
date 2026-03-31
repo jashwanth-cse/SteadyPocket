@@ -1,27 +1,31 @@
-import React, { useState } from 'react';
-import { auth } from '../firebase';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { Banknote, Github, Mail } from 'lucide-react';
-import { motion } from 'motion/react';
+import React, { useState } from "react";
+import { auth } from "../firebase";
+import {
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
+import { Banknote, Github, Mail } from "lucide-react";
+import { motion } from "motion/react";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleEmailLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === 'admin@steadypocket.com' && password === 'admin') {
-      localStorage.setItem('is_admin', 'true');
-      window.location.href = '/';
+    if (email === "admin@steadypocket.com" && password === "admin123") {
+      localStorage.setItem("is_admin", "true");
+      window.location.href = "/";
     } else {
-      setError('Invalid admin credentials.');
+      setError("Invalid admin credentials.");
     }
   };
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center p-6">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
@@ -31,13 +35,17 @@ export default function Login() {
             <Banknote className="text-black w-8 h-8" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Steady Pocket</h1>
-          <p className="text-neutral-500 uppercase tracking-[0.2em] text-xs font-semibold">Admin Monitoring Platform</p>
+          <p className="text-neutral-500 uppercase tracking-[0.2em] text-xs font-semibold">
+            Admin Monitoring Platform
+          </p>
         </div>
 
         <div className="bg-[#111111] border border-white/5 rounded-3xl p-8 shadow-2xl">
           <form onSubmit={handleEmailLogin} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-neutral-400 mb-2">Email Address</label>
+              <label className="block text-sm font-medium text-neutral-400 mb-2">
+                Email Address
+              </label>
               <input
                 type="email"
                 value={email}
@@ -48,7 +56,9 @@ export default function Login() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-400 mb-2">Password</label>
+              <label className="block text-sm font-medium text-neutral-400 mb-2">
+                Password
+              </label>
               <input
                 type="password"
                 value={password}
@@ -59,7 +69,11 @@ export default function Login() {
               />
             </div>
 
-            {error && <p className="text-red-400 text-sm bg-red-400/10 p-3 rounded-lg border border-red-400/20">{error}</p>}
+            {error && (
+              <p className="text-red-400 text-sm bg-red-400/10 p-3 rounded-lg border border-red-400/20">
+                {error}
+              </p>
+            )}
 
             <button
               type="submit"
