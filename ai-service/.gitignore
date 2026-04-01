@@ -9,3 +9,5 @@ venv/
 config/gcp-service-account.json
 *.log
 !.env.example
+.dockerignore
+.gcloudignore

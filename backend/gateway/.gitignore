@@ -2,6 +2,10 @@ node_modules/
 .env
 .env.local
 .env.*.local
-config/serviceAccountKey.json
+#config/serviceAccountKey.json
 *.log
 !.env.example
+.dockerignore
+.firebaserc
+apphosting.yaml
+./config/serviceAccountKey.json
