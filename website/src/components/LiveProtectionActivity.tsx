@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Users, ChevronRight } from 'lucide-react';
 
 // --- Types ---
-type TriggerType = 'weather' | 'location' | 'inactivity' | 'incident';
+export type TriggerType = 'weather' | 'location' | 'inactivity' | 'incident';
 
-interface TriggerEvent {
+export interface TriggerEvent {
   type: TriggerType;
   message: string;
   action: string;

@@ -1,14 +1,15 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
-  ShieldCheck, 
-  Banknote, 
-  AlertTriangle, 
+import {
+  LayoutDashboard,
+  Users,
+  ShieldCheck,
+  Banknote,
+  AlertTriangle,
   LogOut,
   Menu,
   X,
-  Clock
+  Clock,
+  BrainCircuit
 } from 'lucide-react';
 import { useState } from 'react';
 import { auth } from '../firebase';
@@ -38,6 +39,7 @@ export default function Layout() {
     { to: '/payouts', icon: Banknote, label: 'Payouts' },
     { to: '/fraud', icon: AlertTriangle, label: 'Fraud Alerts' },
     { to: '/logs', icon: Clock, label: 'Audit Logs' },
+    { to: '/protection-system', icon: BrainCircuit, label: 'Smart Protection' },
   ];
 
   return (
