@@ -17,11 +17,14 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS — only the Node.js gateway should call this service
+# CORS — allow gateway URL + localhost (configurable via env for security)
+import os as _os
+_raw = _os.getenv("ALLOWED_ORIGINS", "*")
+_origins = [o.strip() for o in _raw.split(",")] if _raw != "*" else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3001"],
-    allow_credentials=True,
+    allow_origins=_origins,
+    allow_credentials=_raw != "*",
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -39,4 +42,6 @@ def health():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, log_level="info")
+    import os as _os
+    _port = int(_os.environ.get("PORT", 8080))
+    uvicorn.run("main:app", host="0.0.0.0", port=_port, reload=False, log_level="info")
