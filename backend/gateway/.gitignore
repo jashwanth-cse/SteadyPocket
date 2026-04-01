@@ -8,4 +8,4 @@ node_modules/
 .dockerignore
 .firebaserc
 apphosting.yaml
-./config/serviceAccountKey.json
+serviceAccountKey.json
