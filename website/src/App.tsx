@@ -20,15 +20,9 @@ export default function App() {
 
   useEffect(() => {
     const checkAuth = () => {
-      const isLocalAdmin = localStorage.getItem('is_admin') === 'true';
-      
       const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
         if (firebaseUser) {
           setUser(firebaseUser);
-          initListeners();
-          setLoading(false);
-        } else if (isLocalAdmin) {
-          setUser({ email: 'admin@steadypocket.com' } as any);
           initListeners();
           setLoading(false);
         } else {

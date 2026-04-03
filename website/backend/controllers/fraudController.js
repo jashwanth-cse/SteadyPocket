@@ -14,7 +14,6 @@ exports.getAllAlerts = async (req, res) => {
     const alerts = alertsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json(alerts);
   } catch (error) {
-    console.error('GetAllAlerts Error:', error);
     res.status(500).json({ error: 'Failed to fetch security alerts' });
   }
 };
@@ -57,7 +56,8 @@ exports.updateAlertStatus = async (req, res) => {
 
     res.json({ success: true, message: `Fraud alert ${alertId} updated to ${status}` });
   } catch (error) {
-    console.error('UpdateAlertStatus Error:', error);
+    // Silent error
+
     res.status(500).json({ error: 'Failed to update fraud alert' });
   }
 };

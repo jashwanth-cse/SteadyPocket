@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 
 interface User {
@@ -94,13 +94,15 @@ export const useStore = create<AdminStore>((set, get) => ({
 
   performAction: async (endpoint, method, body) => {
     const user = auth.currentUser;
-    const token = user ? await user.getIdToken() : 'mock-admin';
+    if (!user) throw new Error('Unauthorized: No user logged in');
+    const token = await user.getIdToken();
 
     const envApiUrl = (import.meta as any).env?.VITE_API_URL;
     // Prefer absolute URL if provided, otherwise trust the proxy
     const apiUrl = envApiUrl && envApiUrl.startsWith('http') ? envApiUrl : (envApiUrl || '');
     
-    console.log(`Action: ${method} ${endpoint} via ${apiUrl || 'local proxy'}`);
+    // Removed console.log for production
+
 
     try {
       const response = await fetch(`${apiUrl}${endpoint}`, {
@@ -128,7 +130,8 @@ export const useStore = create<AdminStore>((set, get) => ({
         return { message: 'Success (Non-JSON)', text: text.substring(0, 100) };
       }
     } catch (error: any) {
-      console.error(`API Action Error (${endpoint}):`, error);
+      // Error handled by UI via throw err
+
       throw error;
     }
   },
@@ -156,20 +159,27 @@ export const useStore = create<AdminStore>((set, get) => ({
         isLoading: false 
       });
     } catch (error) {
-      console.error('FetchData Fallback Error:', error);
+      // Silent fallback
+
       set({ isLoading: false });
     }
   },
 
   initListeners: () => {
     const handleError = (error: any) => {
-      console.error('Firestore Listener Error:', error);
       // Fallback if not already loaded or if permission denied
       if (error.code === 'permission-denied') {
         get().fetchData();
       }
       set({ isLoading: false });
     };
+
+    // Fail-safe: ensure loading resolves within 5 seconds even on slow networks
+    setTimeout(() => {
+      if (get().isLoading) {
+        set({ isLoading: false });
+      }
+    }, 5000);
 
     // 1. Users Listener
     onSnapshot(collection(db, 'users'), (snapshot) => {
@@ -178,21 +188,21 @@ export const useStore = create<AdminStore>((set, get) => ({
     }, handleError);
 
     // 2. Payouts Listener
-    const payoutsQuery = query(collection(db, 'payouts'), orderBy('timestamp', 'desc'));
+    const payoutsQuery = query(collection(db, 'payouts'), orderBy('timestamp', 'desc'), limit(200));
     onSnapshot(payoutsQuery, (snapshot) => {
       const payouts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Payout));
       set({ payouts });
     }, handleError);
 
     // 3. Fraud Alerts Listener
-    const alertsQuery = query(collection(db, 'fraud_alerts'), orderBy('timestamp', 'desc'));
+    const alertsQuery = query(collection(db, 'fraud_alerts'), orderBy('timestamp', 'desc'), limit(200));
     onSnapshot(alertsQuery, (snapshot) => {
       const alerts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Alert));
       set({ alerts });
     }, handleError);
 
     // 4. System Events (Audit Logs) Listener
-    const eventsQuery = query(collection(db, 'system_events'), orderBy('timestamp', 'desc'));
+    const eventsQuery = query(collection(db, 'system_events'), orderBy('timestamp', 'desc'), limit(200));
     onSnapshot(eventsQuery, (snapshot) => {
       const systemEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       set({ systemEvents });
@@ -221,22 +231,9 @@ export const useStore = create<AdminStore>((set, get) => ({
         let end = customDateRange.end ? new Date(customDateRange.end) : null;
         
         if (start && end) {
-          // If start and end are same, treat as whole day
-          // Otherwise, ensure end is end of day
           end.setHours(23, 59, 59, 999);
-          // The original logic for customDateRange.end was to default to new Date() if not provided.
-          // This new logic ensures that if customDateRange.end is not provided, and only start is,
-          // it treats it as a single day (start to end of start day).
-          // However, the provided snippet's `if (!customDateRange.end)` block is inside `if (start && end)`,
-          // which means `end` would already be defined.
-          // Let's adjust to correctly handle the case where customDateRange.end is null.
-          // If customDateRange.end is null, we should treat it as the end of the start day.
-          if (!customDateRange.end && start) {
-            end = new Date(start);
-            end.setHours(23, 59, 59, 999);
-          }
           return itemDate >= start && itemDate <= end;
-        } else if (start && !end) { // Case where only start date is provided for custom range
+        } else if (start && !end) {
           end = new Date(start);
           end.setHours(23, 59, 59, 999);
           return itemDate >= start && itemDate <= end;
@@ -259,33 +256,36 @@ export const useStore = create<AdminStore>((set, get) => ({
       }
       return true;
     };
+    
+    const totalUsers = riders.length;
+    const activeUsers = riders.filter(r => String(r.status).toLowerCase() === 'active').length;
 
-    const filteredRiders = riders; // Users usually shouldn't be filtered by dashboard date unless it's "New Users"
     const filteredPayouts = payouts.filter(filterByDate);
     const filteredAlerts = alerts.filter(filterByDate);
     
-    const activeUsers = riders.filter(r => String(r.status).toLowerCase() === 'active').length;
+    let totalPayoutAmount = 0;
+    const affectedUsers = new Set<string>();
+    
+    filteredPayouts.forEach(p => {
+      const s = String(p.status).toLowerCase();
+      if (s === 'approved' || s === 'completed' || s === 'processing') {
+        totalPayoutAmount += (p.amount || (p as any).total_payout || 0);
+      }
+      affectedUsers.add(p.userId || (p as any).user_id || '');
+    });
     
     const pendingAlerts = filteredAlerts.filter(a => {
       const s = String(a.status).toLowerCase();
-      return s === 'pending' || s === 'flagged' || s === 'under_review' || s === 'action_required';
+      const st = s.toLowerCase();
+      return st === 'pending' || st === 'flagged' || st === 'under_review' || st === 'action_required';
     }).length;
-    
-    const totalPayoutAmount = filteredPayouts
-      .filter(p => {
-        const s = String(p.status).toLowerCase();
-        return s === 'approved' || s === 'completed' || s === 'processing';
-      })
-      .reduce((sum, p) => sum + (p.amount || (p as any).total_payout || 0), 0);
-
-    const affectedUsersCount = new Set(filteredPayouts.map(p => p.userId || (p as any).user_id)).size;
 
     return {
-      totalUsers: riders.length,
+      totalUsers,
       activeUsers,
       totalPayoutAmount,
       fraudAlerts: pendingAlerts,
-      affectedRiders: affectedUsersCount
+      affectedRiders: affectedUsers.size
     };
   }
 }));

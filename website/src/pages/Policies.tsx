@@ -89,7 +89,56 @@ export default function Policies() {
       </div>
 
       <div className="bg-[#111111] border border-white/5 rounded-3xl overflow-hidden">
-        <div className="overflow-x-auto no-scrollbar">
+        {/* Mobile Card View */}
+        <div className="lg:hidden divide-y divide-white/5">
+          {filteredPolicies.map((policy) => {
+            const user = riders.find(r => r.id === ((policy as any).user_id || (policy as any).userId));
+            return (
+              <div key={policy.id} className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-white">{user?.emp_name || policy.rider_name || 'Anonymous'}</p>
+                    <p className="text-xs text-neutral-500">{policy.city || user?.work_location || 'Unknown City'}</p>
+                  </div>
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                    policy.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 
+                    policy.status === 'expired' ? 'bg-neutral-500/10 text-neutral-400' : 
+                    'bg-red-500/10 text-red-400'
+                  }`}>
+                    {policy.status}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">Premium</p>
+                    <div className="flex items-center gap-1 text-emerald-400 font-bold text-sm">
+                      <IndianRupee className="w-3 h-3" />
+                      {policy.premium}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">Risk Score</p>
+                    <div className="flex items-center gap-2">
+                      <Activity className={`w-3.5 h-3.5 ${policy.risk_score > 0.7 ? 'text-red-400' : 'text-emerald-400'}`} />
+                      <span className="text-xs font-mono text-neutral-400">{policy.risk_score.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">Validity Period</p>
+                    <div className="flex items-center gap-2 text-[11px] text-neutral-400">
+                      <Calendar className="w-3 h-3" />
+                      {formatDate(policy.coverage_start)} - {formatDate(policy.coverage_end)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden lg:block overflow-x-auto no-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/5 bg-white/[0.02]">

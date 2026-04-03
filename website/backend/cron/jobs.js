@@ -7,13 +7,15 @@ const startCronJobs = () => {
   // Use node-cron format */5 * * * *
   const CronJob = require('node-cron');
   CronJob.schedule('*/5 * * * *', async () => {
-    console.log('[CRON] Initiating platform integrity & fraud audit...');
+    // Silent cron start
+
     
     try {
       await performFraudCheck();
       await validatePolicies();
     } catch (error) {
-      console.error('[CRON FAILURE]:', error);
+      // Silent cron error
+
     }
   });
 };
@@ -94,7 +96,8 @@ const validatePolicies = async () => {
 
   if (count > 0) {
     await batch.commit();
-    console.log(`[CRON] Expired ${count} policies.`);
+    // Silent cron end
+
   }
 };
 
