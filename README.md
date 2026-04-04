@@ -77,21 +77,34 @@ Steady Pocket provides **parametric protection**:
 No claim filing required.
 
 ---
-
-# 📱 Rider App
+## 📸 App Screenshots
 
 <p align="center">
-  <img src="docs/app1.jpeg" width="300"/>
-  <img src="docs/app3.jpeg" width="300" />
-  <img src="docs/app2.jpeg" width="300"/>
+
+### 🚀 Onboarding  
+<img src="docs/app0.jpeg" width="240"/>
+
+### 📊 Dashboard  
+<img src="docs/app1.jpeg" width="240"/>
+
+### 💰 My Pocket (Wallet)  
+<img src="docs/app3.jpeg" width="240"/>
+
+### 🛡 Policy Coverage  
+<img src="docs/app2.jpeg" width="240"/>
+
+### ⚡ Automated Payout  
+<img src="docs/app4.jpeg" width="240"/>
+
 </p>
 
 <p align="center">
 <b>Seamless experience • Real-time payouts • Smart risk alerts</b>
 </p>
 
-A mobile-first platform is chosen as delivery partners operate entirely through smartphones, enabling real-time tracking, sensor-based verification, and instant payout notifications.
-
+<p align="center">
+A mobile-first platform designed for gig workers, enabling real-time tracking, intelligent verification, and instant payouts.
+</p>
 ---
 
 # 📱 App Workflow

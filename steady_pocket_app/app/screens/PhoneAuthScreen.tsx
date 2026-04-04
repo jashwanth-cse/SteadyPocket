@@ -233,6 +233,9 @@ export default function PhoneAuthScreen() {
                 </View>
               )}
 
+              {/* Test hint */}
+              <Text style={styles.hintText}>Use this number for testing our App: 1234567890</Text>
+
               {/* Error */}
               {error ? <Text style={[styles.errorText, error.includes('⚠️') && styles.warningText]}>{error}</Text> : null}
 
@@ -279,6 +282,9 @@ export default function PhoneAuthScreen() {
                   />
                 ))}
               </View>
+
+              {/* Test hint */}
+              <Text style={styles.hintText}>Default OTP: 123456</Text>
 
               {/* Error */}
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -345,6 +351,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: COLORS.textDark,
+  },
+
+  // Hint / test helper
+  hintText: {
+    fontSize: 12,
+    color: COLORS.textSubtle,
+    marginTop: 10,
+    fontWeight: '400',
   },
 
   // Error
