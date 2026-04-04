@@ -8,6 +8,29 @@
 ### Rain or strike payouts in your pocket
 
 </p>
+## 🌐 Live Demo
+
+<p align="center">
+
+🚀 <b>User App (Android APK)</b><br/>
+<a href="https://github.com/jashwanth-cse/SteadyPocket/releases/download/v1.0/SteadyPocket-v1.0.apk" target="_blank">
+  👉 Try SteadyPocket App
+</a>
+
+<br/><br/>
+
+🧑‍💼 <b>Admin Monitoring Dashboard</b><br/>
+<a href="https://sp-console.web.app/" target="_blank">
+  👉 Open Admin Panel
+</a>
+
+</p>
+
+---
+
+<p align="center">
+Experience the complete system — from user onboarding to real-time automated payouts and admin monitoring.
+</p>
 
 <p align="center">
 
@@ -101,7 +124,6 @@ No claim filing required.
 <p align="center">
   <b>⚡ Automated Payout</b>
 </p>
-
 ---
 
 <p align="center">
