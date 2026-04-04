@@ -8,7 +8,7 @@
 ### Rain or strike payouts in your pocket
 
 </p>
-## 🌐 Live Demo
+### 🌐 Live Demo
 
 <p align="center">
 
@@ -16,9 +16,7 @@
 <a href="https://github.com/jashwanth-cse/SteadyPocket/releases/download/v1.0/SteadyPocket-v1.0.apk" target="_blank">
   👉 Try SteadyPocket App
 </a>
-
 <br/><br/>
-
 🧑‍💼 <b>Admin Monitoring Dashboard</b><br/>
 <a href="https://sp-console.web.app/" target="_blank">
   👉 Open Admin Panel
