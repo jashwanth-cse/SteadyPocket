@@ -80,23 +80,29 @@ No claim filing required.
 ## 📸 App Screenshots
 
 <p align="center">
-
-### 🚀 Onboarding  
-<img src="docs/app0.jpeg" width="240"/>
-
-### 📊 Dashboard  
-<img src="docs/app1.jpeg" width="240"/>
-
-### 💰 My Pocket (Wallet)  
-<img src="docs/app3.jpeg" width="240"/>
-
-### 🛡 Policy Coverage  
-<img src="docs/app2.jpeg" width="240"/>
-
-### ⚡ Automated Payout  
-<img src="docs/app4.jpeg" width="240"/>
-
+  <img src="docs/app0.jpeg" width="220"/>
+  <img src="docs/app1.jpeg" width="220"/>
 </p>
+<p align="center">
+  <b>🚀 Onboarding & 📊 Dashboard</b>
+</p>
+
+<p align="center">
+  <img src="docs/app3.jpeg" width="220"/>
+  <img src="docs/app2.jpeg" width="220"/>
+</p>
+<p align="center">
+  <b>💰 My Pocket (Wallet) & 🛡 Policy Coverage</b>
+</p>
+
+<p align="center">
+  <img src="docs/app4.jpeg" width="220"/>
+</p>
+<p align="center">
+  <b>⚡ Automated Payout</b>
+</p>
+
+---
 
 <p align="center">
 <b>Seamless experience • Real-time payouts • Smart risk alerts</b>
