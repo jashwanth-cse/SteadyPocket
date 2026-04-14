@@ -15,10 +15,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router';
 import type { ConfirmationResult } from 'firebase/auth';
 
-import app from '../../services/firebase';
-
-import { sendOTP, verifyOTP, saveUserToFirestore, checkPhoneExists, storeLoginTimestamp, isSessionExpired, getVerificationStatus, triggerPostLoginFraudCheck, type VerificationStatus } from '../../services/authService';
-import { APP_NAME } from '../../services/constants';
+import { sendOTP, verifyOTP, saveUserToFirestore, checkPhoneExists, storeLoginTimestamp, getVerificationStatus, triggerPostLoginFraudCheck, type VerificationStatus } from '../../services/authService';
 import { COLORS, TYPOGRAPHY, COMPONENTS } from '../theme';
 import { useErrorHandler } from '../../hooks/useErrorHandler';
 

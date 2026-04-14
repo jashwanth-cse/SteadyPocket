@@ -243,7 +243,7 @@ export async function triggerPostLoginFraudCheck(uid: string): Promise<void> {
       }
 
       // Detect mock location on device
-      const result = await detectMockLocation(uid);
+      const result = await detectMockLocation();
 
       if (result.isMockLocation) {
         // Create fraud alert in Firestore (user-scoped collection)

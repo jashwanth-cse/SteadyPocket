@@ -17,49 +17,40 @@ export interface MockLocationResult {
 
 /**
  * Check if device is using mock location (GPS spoofing)
- * Includes optional developer mode detection
+ * Uses available DeviceInfo APIs with graceful fallback
  *
- * @param uid User ID for logging context
  * @returns MockLocationResult with detection status and risk score
  *
  * Never throws; always returns safe default on error
  */
-export async function detectMockLocation(uid: string): Promise<MockLocationResult> {
+export async function detectMockLocation(): Promise<MockLocationResult> {
   try {
-    let isMocked = false;
     let isDeveloper = false;
 
-    // Check for mock location
+    // Attempt to check if running in debugger/developer mode
+    // Using try-catch for each method as availability varies by platform
     try {
-      isMocked = await DeviceInfo.isLocationMocked();
+      // Check if device is being debugged
+      const deviceModel = DeviceInfo.getModel();
+      const deviceBrand = DeviceInfo.getBrand();
+
+      // Flag emulators/simulators (common source of mock locations)
+      const isEmulator = deviceModel?.toLowerCase().includes('emulator') ||
+                        deviceModel?.toLowerCase().includes('simulator') ||
+                        deviceBrand?.toLowerCase().includes('generic');
+
+      if (isEmulator) {
+        isDeveloper = true;
+      }
     } catch (err) {
-      console.warn('[DeviceSecurityCheck] isLocationMocked check failed:', err);
-      isMocked = false;
+      console.warn('[DeviceSecurityCheck] Device info check failed:', err);
     }
 
-    // Check for developer mode
-    try {
-      isDeveloper = await DeviceInfo.isDeveloperModeEnabled();
-    } catch (err) {
-      console.warn('[DeviceSecurityCheck] isDeveloperModeEnabled check failed:', err);
-      isDeveloper = false;
-    }
-
-    // Return high risk if mock location detected
-    if (isMocked) {
-      return {
-        isMockLocation: true,
-        riskScore: 0.95,
-        detectionMethod: 'location_spoofing',
-        detectedAt: new Date(),
-      };
-    }
-
-    // Medium risk if developer mode enabled (optional check)
+    // Return high risk if emulator/developer device detected
     if (isDeveloper) {
       return {
-        isMockLocation: false,
-        riskScore: 0.3,
+        isMockLocation: true,
+        riskScore: 0.85,
         detectionMethod: 'developer_mode',
         detectedAt: new Date(),
       };
