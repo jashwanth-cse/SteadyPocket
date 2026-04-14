@@ -74,10 +74,10 @@ export default function GlobalSearch() {
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-3 px-4 py-2 bg-[#111111] border border-white/5 rounded-xl text-neutral-500 hover:text-white hover:border-white/10 transition-all group w-48 lg:w-64"
+        className="flex items-center gap-3 px-3 sm:px-4 py-2 bg-[#111111] border border-white/5 rounded-xl text-neutral-500 hover:text-white hover:border-white/10 transition-all group w-10 sm:w-48 lg:w-64"
       >
-        <Search className="w-4 h-4" />
-        <span className="text-sm font-medium flex-1 text-left">Search...</span>
+        <Search className="w-4 h-4 shrink-0" />
+        <span className="text-sm font-medium flex-1 text-left hidden sm:inline">Search...</span>
         <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-[10px] font-mono">
           <CornerDownLeft className="w-2.5 h-2.5" /> K
         </kbd>

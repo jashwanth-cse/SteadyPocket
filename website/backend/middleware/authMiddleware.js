@@ -17,12 +17,6 @@ const verifyToken = async (req, res, next) => {
     req.user = decodedToken;
     next();
   } catch (error) {
-    console.error('Auth Middleware Error:', error);
-    // For development convenience, if the token is "mock-admin", let it pass
-    if (process.env.NODE_ENV !== 'production' && idToken === 'mock-admin') {
-      req.user = { uid: 'mock-admin-uid', email: 'admin@steadypocket.com', role: 'admin' };
-      return next();
-    }
     res.status(403).json({ error: 'Unauthorized: Invalid token' });
   }
 };

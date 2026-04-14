@@ -45,7 +45,8 @@ export default function Payouts() {
     try {
       await performAction(`/api/payouts/${payoutId}/approve`, 'PATCH');
     } catch (err: any) {
-      console.error(err);
+      // Error already shown via alert(err.message)
+
       alert(err.message);
     } finally {
       setProcessingId(null);
@@ -120,24 +121,24 @@ export default function Payouts() {
           .map((payoutItem) => (
           <div 
             key={payoutItem.id} 
-            className="bg-[#111111] border border-white/5 p-5 rounded-3xl flex flex-col xl:flex-row xl:items-center justify-between gap-6 hover:border-emerald-500/10 transition-all group"
+            className="bg-[#111111] border border-white/5 p-6 rounded-3xl flex flex-col xl:flex-row xl:items-center justify-between gap-6 hover:border-emerald-500/10 transition-all group"
           >
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/5 flex items-center justify-center shrink-0">
                 {getEventIcon(payoutItem.event_type || '')}
               </div>
-              <div>
-                <h3 className="text-lg font-bold text-white capitalize">{getUserName((payoutItem as any).user_id || payoutItem.userId)}</h3>
-                <div className="flex items-center gap-3 text-sm text-neutral-500 mt-1">
-                  <span className="flex items-center gap-1">{(payoutItem.event_type || 'System')} Event</span>
-                  <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {payoutItem.location || 'Remote'}</span>
+              <div className="min-w-0">
+                <h3 className="text-base sm:text-lg font-bold text-white capitalize truncate">{getUserName((payoutItem as any).user_id || payoutItem.userId)}</h3>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-neutral-500 mt-1">
+                  <span className="flex items-center gap-1">{(payoutItem.event_type || 'System')}</span>
+                  <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3" /> {payoutItem.location || 'Remote'}</span>
                   <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3" /> 
                     {payoutItem.timestamp ? (
                       typeof payoutItem.timestamp === 'string' 
-                        ? new Date(payoutItem.timestamp).toLocaleString()
+                        ? new Date(payoutItem.timestamp).toLocaleDateString()
                         : payoutItem.timestamp?.seconds 
-                          ? new Date(payoutItem.timestamp.seconds * 1000).toLocaleString()
+                          ? new Date(payoutItem.timestamp.seconds * 1000).toLocaleDateString()
                           : 'N/A'
                     ) : 'N/A'}
                   </span>
@@ -145,39 +146,39 @@ export default function Payouts() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-12 w-full xl:w-auto">
               <div>
-                <p className="text-xs text-neutral-500 uppercase tracking-widest font-bold mb-1">Affected Riders</p>
-                <p className="text-xl font-bold text-white">1</p>
+                <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-1">Affected</p>
+                <p className="text-lg font-bold text-white">1 Rider</p>
               </div>
               <div>
-                <p className="text-xs text-neutral-500 uppercase tracking-widest font-bold mb-1">Total Payout</p>
-                <p className="text-xl font-bold text-emerald-400">₹{(payoutItem.amount || (payoutItem as any).total_payout || 0).toLocaleString()}</p>
+                <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-1">Amount</p>
+                <p className="text-lg font-bold text-emerald-400">₹{(payoutItem.amount || (payoutItem as any).total_payout || 0).toLocaleString()}</p>
               </div>
-              <div className="col-span-2 lg:col-span-1">
-                <p className="text-xs text-neutral-500 uppercase tracking-widest font-bold mb-1">Status</p>
-                <div className="flex items-center gap-2 text-emerald-400 font-bold">
+              <div className="col-span-2 lg:col-span-1 border-t border-white/5 pt-4 lg:border-none lg:pt-0">
+                <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-1">Status</p>
+                <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
                   <CheckCircle2 className="w-4 h-4" />
                   {payoutItem.status || 'Pending'}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full xl:w-auto mt-2 xl:mt-0">
               {payoutItem.status === 'Processing' && (
                 <button 
                   onClick={() => handleApprove(payoutItem.id)}
                   disabled={processingId === payoutItem.id}
-                  className={`px-6 py-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 rounded-xl text-sm font-bold transition-all ${processingId === payoutItem.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`w-full sm:w-auto px-6 py-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 rounded-xl text-sm font-bold transition-all ${processingId === payoutItem.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
-                  {processingId === payoutItem.id ? 'Approving...' : 'Approve Payout'}
+                  {processingId === payoutItem.id ? 'Approving...' : 'Approve'}
                 </button>
               )}
               <button 
                 onClick={() => setSelectedEvent(payoutItem)}
-                className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-bold transition-all"
+                className="w-full sm:w-auto px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-bold text-white transition-all"
               >
-                Details
+                View Details
               </button>
             </div>
           </div>

@@ -14,7 +14,6 @@ exports.getAllPayouts = async (req, res) => {
     const payouts = payoutsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json(payouts);
   } catch (error) {
-    console.error('GetAllPayouts Error:', error);
     res.status(500).json({ error: 'Failed to retrieve payout history' });
   }
 };
@@ -61,7 +60,8 @@ exports.updatePayoutStatus = async (req, res) => {
 
     res.json({ success: true, message: `Payout marked as ${status.toUpperCase()}` });
   } catch (error) {
-    console.error('UpdatePayoutStatus Error:', error);
+    // Silent error
+
     res.status(500).json({ error: 'System error during payout processing' });
   }
 };

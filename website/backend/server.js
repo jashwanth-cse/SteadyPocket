@@ -22,16 +22,19 @@ if (fs.existsSync(serviceAccountPath)) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
   });
-  console.log('Firebase initialized with service-account.json');
+  // Silent init
+
 } else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   try {
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
     });
-    console.log('Firebase initialized with FIREBASE_SERVICE_ACCOUNT env');
+    // Silent init
+
   } catch (err) {
-    console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT env:', err.message);
+    // Silent error
+
     admin.initializeApp({ projectId: 'para-insurance-platform' });
   }
 } else {
@@ -49,7 +52,8 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 app.use((req, res, next) => {
-  console.log(`[DEBUG] ${req.method} ${req.url}`);
+  // Request logging removed for production
+
   next();
 });
 
@@ -72,7 +76,7 @@ startCronJobs();
 
 // Start Server
 app.listen(PORT, () => {
-  console.log(`Steady Pocket Admin Backend running on port ${PORT}`);
+  console.log(`Steady Pocket Backend Live`);
 });
 
 module.exports = { app, db };

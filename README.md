@@ -8,6 +8,27 @@
 ### Rain or strike payouts in your pocket
 
 </p>
+### 🌐 Live Demo
+
+<p align="center">
+
+🚀 <b>User App (Android APK)</b><br/>
+<a href="https://github.com/jashwanth-cse/SteadyPocket/releases/download/v1.0/SteadyPocket-v1.0.apk" target="_blank">
+  👉 Try SteadyPocket App
+</a>
+<br/><br/>
+🧑‍💼 <b>Admin Monitoring Dashboard</b><br/>
+<a href="https://sp-console.web.app/" target="_blank">
+  👉 Open Admin Panel
+</a>
+
+</p>
+
+---
+
+<p align="center">
+Experience the complete system — from user onboarding to real-time automated payouts and admin monitoring.
+</p>
 
 <p align="center">
 
@@ -77,21 +98,39 @@ Steady Pocket provides **parametric protection**:
 No claim filing required.
 
 ---
-
-# 📱 Rider App
+## 📸 App Screenshots
 
 <p align="center">
-  <img src="docs/app1.jpeg" width="300"/>
-  <img src="docs/app3.jpeg" width="300" />
-  <img src="docs/app2.jpeg" width="300"/>
+  <img src="docs/app0.jpeg" width="220"/>
+  <img src="docs/app1.jpeg" width="220"/>
 </p>
+<p align="center">
+  <b>🚀 Onboarding & 📊 Dashboard</b>
+</p>
+
+<p align="center">
+  <img src="docs/app3.jpeg" width="220"/>
+  <img src="docs/app2.jpeg" width="220"/>
+</p>
+<p align="center">
+  <b>💰 My Pocket (Wallet) & 🛡 Policy Coverage</b>
+</p>
+
+<p align="center">
+  <img src="docs/app4.jpeg" width="220"/>
+</p>
+<p align="center">
+  <b>⚡ Automated Payout</b>
+</p>
+---
 
 <p align="center">
 <b>Seamless experience • Real-time payouts • Smart risk alerts</b>
 </p>
 
-A mobile-first platform is chosen as delivery partners operate entirely through smartphones, enabling real-time tracking, sensor-based verification, and instant payout notifications.
-
+<p align="center">
+A mobile-first platform designed for gig workers, enabling real-time tracking, intelligent verification, and instant payouts.
+</p>
 ---
 
 # 📱 App Workflow

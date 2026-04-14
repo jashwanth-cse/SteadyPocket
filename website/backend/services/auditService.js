@@ -17,9 +17,8 @@ const logEvent = async (adminId, action, targetId, metadata = {}) => {
       metadata,
       timestamp: admin.firestore.FieldValue.serverTimestamp()
     });
-    console.log(`[Audit] ${action} by ${adminId} on ${targetId}`);
   } catch (error) {
-    console.error('Audit Logging Failed:', error);
+    // Silent catch
   }
 };
 

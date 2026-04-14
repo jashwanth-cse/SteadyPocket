@@ -42,7 +42,8 @@ export default function Riders() {
       await performAction(`/api/users/${riderId}/status`, 'PATCH', { status: newStatus });
       setSelectedRider(null);
     } catch (err: any) {
-      console.error(err);
+      // Error already shown via alert(err.message)
+
       alert(err.message);
     }
   };
@@ -117,7 +118,67 @@ export default function Riders() {
       </div>
 
       <div className="bg-[#111111] border border-white/5 rounded-3xl overflow-hidden">
-        <div className="overflow-x-auto no-scrollbar">
+        {/* Mobile Card View */}
+        <div className="lg:hidden divide-y divide-white/5">
+          {filteredRiders.map((rider) => (
+            <div key={rider.id} className="p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center text-emerald-400 font-bold border border-white/5">
+                    {rider.emp_name[0]}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-white">{rider.emp_name}</p>
+                    <p className="text-[10px] font-mono bg-white/5 px-2 py-0.5 rounded text-neutral-500 uppercase">{rider.partner_id}</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setSelectedRider(rider)}
+                  className="p-2 text-neutral-500 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">Platform</p>
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="w-3 h-3 text-emerald-500/50" />
+                    <span className="text-xs text-neutral-300 font-medium">{rider.platform}</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">Status</p>
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${statusColors[rider.status]}`}>
+                    {rider.status.replace('_', ' ')}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">Risk Score</p>
+                  <div className="flex items-center gap-2 text-xs font-mono text-white">
+                    <div className="w-12 bg-white/5 h-1 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full ${rider.risk_score > 0.7 ? 'bg-red-500' : rider.risk_score > 0.3 ? 'bg-yellow-500' : 'bg-emerald-500'}`}
+                        style={{ width: `${rider.risk_score * 100}%` }}
+                      />
+                    </div>
+                    {rider.risk_score.toFixed(2)}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">Location</p>
+                  <div className="flex items-center gap-1 text-xs text-neutral-400">
+                    <MapPin className="w-3 h-3" /> {rider.work_location}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden lg:block overflow-x-auto no-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/5 bg-white/[0.02]">

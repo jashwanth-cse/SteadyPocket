@@ -31,7 +31,6 @@ exports.downloadReport = async (req, res) => {
 
     res.status(400).json({ error: 'Unsupported format. Use csv or json.' });
   } catch (error) {
-    console.error('Report Download Error:', error);
     res.status(500).json({ error: 'Failed to generate report' });
   }
 };

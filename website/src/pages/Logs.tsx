@@ -100,7 +100,55 @@ export default function Logs() {
       </div>
 
       <div className="bg-[#111111] border border-white/5 rounded-3xl overflow-hidden min-h-[500px]">
-        <div className="overflow-x-auto no-scrollbar">
+        {/* Mobile Card View */}
+        <div className="lg:hidden divide-y divide-white/5">
+          {filteredEvents.map((event, i) => (
+            <div key={event.id || i} className="p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-[10px] font-bold text-emerald-400 border border-white/5">
+                    {(event.adminId || 'S')[0].toUpperCase()}
+                  </div>
+                  <span className="text-sm font-bold text-white">{event.adminId || 'System'}</span>
+                </div>
+                <span className="text-[10px] text-neutral-500 font-mono">
+                  {event.timestamp ? (
+                    event.timestamp.toDate 
+                      ? event.timestamp.toDate().toLocaleDateString() 
+                      : new Date(event.timestamp).toLocaleDateString()
+                  ) : 'Recent'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-white/5">
+                  {getActionIcon(event.action)}
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Action</p>
+                  <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider">{event.action || 'Internal'}</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">Target Resource</p>
+                <code className="text-[10px] bg-white/5 px-2 py-1 rounded text-neutral-400 block truncate">
+                  {event.targetId || 'N/A'}
+                </code>
+              </div>
+
+              <div className="bg-black/20 p-3 rounded-xl border border-white/5">
+                <p className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Raw Details</p>
+                <p className="text-[10px] text-neutral-500 break-all line-clamp-2">
+                  {JSON.stringify(event.metadata || event.details || {})}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden lg:block overflow-x-auto no-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-white/5 bg-white/[0.02]">

@@ -30,7 +30,8 @@ exports.getStats = async (req, res) => {
       systemEvents
     });
   } catch (error) {
-    console.error('Critical Dashboard Stats Error:', error);
+    // Silent error
+
     res.status(500).json({ error: 'Failed to fetch dashboard stats', details: error.message });
   }
 };

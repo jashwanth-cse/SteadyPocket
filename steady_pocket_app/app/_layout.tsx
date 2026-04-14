@@ -90,7 +90,11 @@ export default function RootLayout() {
         const status = await getVerificationStatus(user.uid);
 
         if (!status) {
-          setAppState("unauthenticated");
+          // Authenticated but Firestore doc not linked yet (e.g. Firestore write still in-flight
+          // right after OTP verification). Route to onboarding start as a safe default rather
+          // than kicking an authenticated user back to /phone-auth.
+          setTargetRoute("/swiggy-id-upload");
+          setAppState("authenticated");
         } else {
           if (status === "kyc_complete") {
             const expired = await isSessionExpired(user.uid);
@@ -122,12 +126,18 @@ export default function RootLayout() {
   useEffect(() => {
     if (!isReady || !rootNavigationState?.key) return;
 
+    const currentRoute = "/" + segments.join("/");
+
     if (appState === "app-tour") {
-      router.replace("/app-tour");
+      // Only redirect to the tour when still on a pre-tour route.
+      // If the user already completed the tour and navigated away (e.g. to /phone-auth),
+      // a segments change must NOT bounce them back.
+      if (currentRoute === "/" || currentRoute === "/splash" || currentRoute === "/app-tour") {
+        router.replace("/app-tour");
+      }
     } else if (appState === "unauthenticated") {
       router.replace("/phone-auth");
     } else if (appState === "authenticated" && targetRoute) {
-      const currentRoute = "/" + segments.join("/");
       if (currentRoute === "/" || currentRoute === "/splash" || currentRoute === "/phone-auth") {
         router.replace(targetRoute as any);
       }

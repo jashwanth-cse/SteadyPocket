@@ -18,7 +18,6 @@ exports.getAllRiders = async (req, res) => {
     }));
     res.json(riders);
   } catch (error) {
-    console.error('GetAllRiders Error:', error);
     res.status(500).json({ error: 'Failed to fetch riders from platform' });
   }
 };
@@ -69,7 +68,8 @@ exports.updateRiderStatus = async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('UpdateRiderStatus Error:', error);
+    // Silent error
+
     res.status(500).json({ error: 'Transaction failed during status update' });
   }
 };
