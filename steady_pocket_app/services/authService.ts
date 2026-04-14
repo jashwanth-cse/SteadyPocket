@@ -22,6 +22,9 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { auth, db } from './firebase';
+import { detectMockLocation } from '../utils/deviceSecurityCheck';
+import { createFraudAlert, hasAlertBeenShownToday, markAlertShownToday } from './fraudService';
+import { showWarning } from '../components/Toast';
 
 export type VerificationStatus =
   | 'pending'
@@ -212,3 +215,66 @@ export async function isSessionExpired(uid: string): Promise<boolean> {
     return false; // Default to NOT expired to not block users on network errors
   }
 }
+
+// ─── Post-Login Fraud Detection (async, non-blocking) ─────────────────────────
+/**
+ * Trigger device security check after successful login
+ * This runs asynchronously and never interrupts the login flow
+ *
+ * Process:
+ * 1. Debounce for 300ms to allow navigation UI to settle
+ * 2. Check session: skip if already alerted today
+ * 3. Detect mock location on device
+ * 4. If found: create Firestore alert + show warning toast
+ * 5. Gracefully handle all errors (never crash)
+ *
+ * @param uid Firebase Auth UID (available after OTP verification)
+ */
+export async function triggerPostLoginFraudCheck(uid: string): Promise<void> {
+  // Defer execution to allow navigation UI to settle
+  // This ensures fraud check doesn't block the OTP verification or router.replace()
+  setTimeout(async () => {
+    try {
+      // Check if alert was already shown today (session deduplication)
+      const hasShown = await hasAlertBeenShownToday(uid);
+      if (hasShown) {
+        console.log('[FraudCheck] Alert already shown today, skipping');
+        return;
+      }
+
+      // Detect mock location on device
+      const result = await detectMockLocation(uid);
+
+      if (result.isMockLocation) {
+        // Create fraud alert in Firestore (user-scoped collection)
+        const { alertId } = await createFraudAlert(uid, {
+          alert_type: 'gps_spoofing',
+          risk_score: result.riskScore,
+          status: 'action_required',
+          detection_method: result.detectionMethod,
+        });
+
+        // Mark as shown today to prevent duplicate alerts
+        await markAlertShownToday(uid);
+
+        // Show non-blocking warning toast to user
+        showWarning(
+          '⚠️ We detected unusual location activity on your account. ' +
+          'For security, please verify your location in settings.',
+          5000
+        );
+
+        console.log('[FraudCheck] Mock location detected, alert created:', {
+          alertId,
+          uid,
+          riskScore: result.riskScore,
+        });
+      }
+    } catch (err) {
+      // Silent failure - never interrupt login flow
+      console.error('[FraudCheck] Post-login detection failed:', err);
+      // App continues normally even if fraud check fails
+    }
+  }, 300); // 300ms debounce ensures navigation completes first
+}
+
