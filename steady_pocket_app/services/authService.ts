@@ -24,7 +24,7 @@ import {
 import { auth, db } from './firebase';
 import { detectMockLocation } from '../utils/deviceSecurityCheck';
 import { createFraudAlert, hasAlertBeenShownToday, markAlertShownToday } from './fraudService';
-import { showWarning } from '../components/Toast';
+import { showMockLocationWarning } from '../components/ModalProvider';
 
 export type VerificationStatus =
   | 'pending'
@@ -260,12 +260,8 @@ export async function triggerPostLoginFraudCheck(uid: string): Promise<void> {
         // Mark as shown today to prevent duplicate alerts
         await markAlertShownToday(uid);
 
-        // Show non-blocking warning toast to user
-        showWarning(
-          '⚠️ We detected unusual location activity on your account. ' +
-          'For security, please verify your location in settings.',
-          5000
-        );
+        // Show warning modal to user
+        showMockLocationWarning();
 
         console.log('[FraudCheck] Mock location detected, alert created:', {
           alertId,

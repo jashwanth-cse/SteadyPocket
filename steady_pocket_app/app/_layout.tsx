@@ -27,6 +27,7 @@ import {
   isSessionExpired,
 } from "../services/authService";
 import { ToastProvider } from "../components/Toast";
+import { ModalProvider } from "../components/ModalProvider";
 import SplashScreen from "./screens/SplashScreen";
 
 /* -------------------------------------------------------------------------- */
@@ -166,22 +167,24 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.container}>
       <SafeAreaProvider>
         <ToastProvider>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: "#FFFFFF" },
-            }}
-          >
-            <Stack.Screen name="index" />
-            <Stack.Screen name="splash" />
-            <Stack.Screen name="app-tour" />
-            <Stack.Screen name="phone-auth" />
-            <Stack.Screen name="swiggy-id-upload" />
-            <Stack.Screen name="selfie-verification" />
-            <Stack.Screen name="govt-id-verification" />
-            <Stack.Screen name="premium-payment" />
-            <Stack.Screen name="dashboard" />
-          </Stack>
+          <ModalProvider>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: "#FFFFFF" },
+              }}
+            >
+              <Stack.Screen name="index" />
+              <Stack.Screen name="splash" />
+              <Stack.Screen name="app-tour" />
+              <Stack.Screen name="phone-auth" />
+              <Stack.Screen name="swiggy-id-upload" />
+              <Stack.Screen name="selfie-verification" />
+              <Stack.Screen name="govt-id-verification" />
+              <Stack.Screen name="premium-payment" />
+              <Stack.Screen name="dashboard" />
+            </Stack>
+          </ModalProvider>
         </ToastProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
