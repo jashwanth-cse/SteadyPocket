@@ -245,12 +245,27 @@ export async function triggerPostLoginFraudCheck(uid: string): Promise<void> {
       }
 
       // Detect mock location on device
-      const result = await detectMockLocation();
-      console.log('[FraudCheck] Detection result:', result);
+      console.log('[FraudCheck] About to detect mock location...');
+      let result;
+      try {
+        result = await detectMockLocation();
+        console.log('[FraudCheck] Detection result:', result);
+      } catch (detectionError) {
+        console.warn('[FraudCheck] Detection error, using demo result:', detectionError);
+        // On web or if detection fails, use demo mode
+        result = {
+          isMockLocation: false,
+          riskScore: 0.5,
+          detectionMethod: 'demo' as const,
+          detectedAt: new Date(),
+          confidence: 1.0,
+        };
+      }
 
       // For demo purposes, show warning regardless of detection
       // In production, this would only trigger if result.isMockLocation is true
       const DEMO_MODE = true; // Set to false in production
+      console.log('[FraudCheck] DEMO_MODE:', DEMO_MODE, 'isMockLocation:', result.isMockLocation);
       if (result.isMockLocation || DEMO_MODE) {
         console.log('[FraudCheck] Showing mock location warning...');
         // Create fraud alert in Firestore (user-scoped collection)
