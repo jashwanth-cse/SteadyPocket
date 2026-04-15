@@ -245,7 +245,10 @@ export async function triggerPostLoginFraudCheck(uid: string): Promise<void> {
       // Detect mock location on device
       const result = await detectMockLocation();
 
-      if (result.isMockLocation) {
+      // For demo purposes, show warning regardless of detection
+      // In production, this would only trigger if result.isMockLocation is true
+      const DEMO_MODE = true; // Set to false in production
+      if (result.isMockLocation || DEMO_MODE) {
         // Create fraud alert in Firestore (user-scoped collection)
         const { alertId } = await createFraudAlert(uid, {
           alert_type: 'gps_spoofing',
