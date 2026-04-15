@@ -22,7 +22,6 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { auth, db } from './firebase';
-import { detectMockLocation } from '../utils/deviceSecurityCheck';
 import { createFraudAlert, hasAlertBeenShownToday, markAlertShownToday } from './fraudService';
 import { showMockLocationWarning } from '../components/ModalProvider';
 
@@ -232,7 +231,6 @@ export async function isSessionExpired(uid: string): Promise<boolean> {
  */
 export async function triggerPostLoginFraudCheck(uid: string): Promise<void> {
   // Defer execution to allow navigation UI to settle
-  // This ensures fraud check doesn't block the OTP verification or router.replace()
   console.log('[FraudCheck] Starting post-login fraud check for uid:', uid);
   setTimeout(async () => {
     try {
@@ -244,54 +242,31 @@ export async function triggerPostLoginFraudCheck(uid: string): Promise<void> {
         return;
       }
 
-      // Detect mock location on device
-      console.log('[FraudCheck] About to detect mock location...');
-      let result;
-      try {
-        result = await detectMockLocation();
-        console.log('[FraudCheck] Detection result:', result);
-      } catch (detectionError) {
-        console.warn('[FraudCheck] Detection error, using demo result:', detectionError);
-        // On web or if detection fails, use demo mode
-        result = {
-          isMockLocation: false,
-          riskScore: 0.5,
-          detectionMethod: 'demo' as const,
-          detectedAt: new Date(),
-          confidence: 1.0,
-        };
-      }
+      // For demo purposes, just show the modal without any detection
+      console.log('[FraudCheck] Showing mock location warning...');
 
-      // For demo purposes, show warning regardless of detection
-      // In production, this would only trigger if result.isMockLocation is true
-      const DEMO_MODE = true; // Set to false in production
-      console.log('[FraudCheck] DEMO_MODE:', DEMO_MODE, 'isMockLocation:', result.isMockLocation);
-      if (result.isMockLocation || DEMO_MODE) {
-        console.log('[FraudCheck] Showing mock location warning...');
-        // Create fraud alert in Firestore (user-scoped collection)
-        const { alertId } = await createFraudAlert(uid, {
-          alert_type: 'gps_spoofing',
-          risk_score: result.riskScore,
-          status: 'action_required',
-          detection_method: result.detectionMethod,
-        });
+      // Create fraud alert in Firestore (user-scoped collection)
+      const { alertId } = await createFraudAlert(uid, {
+        alert_type: 'gps_spoofing',
+        risk_score: 0.9,
+        status: 'action_required',
+        detection_method: 'demo',
+      });
 
-        // Mark as shown today to prevent duplicate alerts
-        await markAlertShownToday(uid);
+      // Mark as shown today to prevent duplicate alerts
+      await markAlertShownToday(uid);
 
-        // Show warning modal to user
-        showMockLocationWarning();
-        console.log('[FraudCheck] Modal show function called');
+      // Show warning modal to user
+      showMockLocationWarning();
+      console.log('[FraudCheck] Modal show function called');
 
-        console.log('[FraudCheck] Mock location detected, alert created:', {
-          alertId,
-          uid,
-          riskScore: result.riskScore,
-        });
-      }
+      console.log('[FraudCheck] Alert created:', {
+        alertId,
+        uid,
+      });
     } catch (err) {
       // Silent failure - never interrupt login flow
-      console.error('[FraudCheck] Post-login detection failed:', err);
+      console.error('[FraudCheck] Post-login check failed:', err);
       // App continues normally even if fraud check fails
     }
   }, 300); // 300ms debounce ensures navigation completes first
