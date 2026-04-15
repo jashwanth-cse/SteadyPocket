@@ -1,4 +1,4 @@
-import React, { useState, createContext, useContext, useRef, useEffect } from 'react';
+import React, { useState, createContext, useContext, useRef, useEffect, useCallback } from 'react';
 import MockLocationWarningModal from './MockLocationWarningModal';
 
 interface ModalContextType {
@@ -16,18 +16,19 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
 
   console.log('[ModalProvider] Rendering - modal visible:', showMockLocationModal);
 
-  const showMockLocationWarning = () => {
+  const showMockLocationWarning = useCallback(() => {
     console.log('[ModalProvider] showMockLocationWarning called, setting state to true');
     setShowMockLocationModal(true);
-  };
+  }, []);
 
-  const hideMockLocationWarning = () => {
+  const hideMockLocationWarning = useCallback(() => {
     console.log('[ModalProvider] hideMockLocationWarning called, setting state to false');
     setShowMockLocationModal(false);
-  };
+  }, []);
 
   // Update manager ref whenever functions change
   useEffect(() => {
+    console.log('[ModalProvider] Updating global manager');
     managerRef.current = {
       showMockLocationWarning,
       hideMockLocationWarning,
@@ -66,7 +67,9 @@ export const useModal = () => {
 export const showMockLocationWarning = () => {
   try {
     const manager = (global as any).modalManager;
+    console.log('[showMockLocationWarning] Manager:', manager ? 'exists' : 'not found');
     if (manager?.showMockLocationWarning) {
+      console.log('[showMockLocationWarning] Calling manager function');
       manager.showMockLocationWarning();
       console.log('[Modal] Mock location warning shown');
     } else {
