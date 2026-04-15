@@ -104,7 +104,7 @@ const MockLocationWarningModal: React.FC<MockLocationWarningModalProps> = ({
                 style={styles.detailsIcon}
               />
               <Text style={styles.detailsText}>
-                Developer Settings → Select Mock Location App → Clear this app
+                Developer Settings → Remove all mock location apps
               </Text>
             </View>
 
