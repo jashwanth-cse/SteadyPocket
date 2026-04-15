@@ -233,10 +233,12 @@ export async function isSessionExpired(uid: string): Promise<boolean> {
 export async function triggerPostLoginFraudCheck(uid: string): Promise<void> {
   // Defer execution to allow navigation UI to settle
   // This ensures fraud check doesn't block the OTP verification or router.replace()
+  console.log('[FraudCheck] Starting post-login fraud check for uid:', uid);
   setTimeout(async () => {
     try {
       // Check if alert was already shown today (session deduplication)
       const hasShown = await hasAlertBeenShownToday(uid);
+      console.log('[FraudCheck] Alert shown today?', hasShown);
       if (hasShown) {
         console.log('[FraudCheck] Alert already shown today, skipping');
         return;
@@ -244,11 +246,13 @@ export async function triggerPostLoginFraudCheck(uid: string): Promise<void> {
 
       // Detect mock location on device
       const result = await detectMockLocation();
+      console.log('[FraudCheck] Detection result:', result);
 
       // For demo purposes, show warning regardless of detection
       // In production, this would only trigger if result.isMockLocation is true
       const DEMO_MODE = true; // Set to false in production
       if (result.isMockLocation || DEMO_MODE) {
+        console.log('[FraudCheck] Showing mock location warning...');
         // Create fraud alert in Firestore (user-scoped collection)
         const { alertId } = await createFraudAlert(uid, {
           alert_type: 'gps_spoofing',
@@ -262,6 +266,7 @@ export async function triggerPostLoginFraudCheck(uid: string): Promise<void> {
 
         // Show warning modal to user
         showMockLocationWarning();
+        console.log('[FraudCheck] Modal show function called');
 
         console.log('[FraudCheck] Mock location detected, alert created:', {
           alertId,

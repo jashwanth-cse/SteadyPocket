@@ -1,4 +1,4 @@
-import React, { useState, createContext, useContext, useEffect } from 'react';
+import React, { useState, createContext, useContext, useRef, useEffect } from 'react';
 import MockLocationWarningModal from './MockLocationWarningModal';
 
 interface ModalContextType {
@@ -12,6 +12,7 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [showMockLocationModal, setShowMockLocationModal] = useState(false);
+  const managerRef = useRef<ModalContextType | null>(null);
 
   const showMockLocationWarning = () => {
     setShowMockLocationModal(true);
@@ -21,21 +22,23 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
     setShowMockLocationModal(false);
   };
 
-  // Store in global ref for easy access
+  // Update manager ref whenever functions change
   useEffect(() => {
-    (global as any).modalManager = {
+    managerRef.current = {
       showMockLocationWarning,
       hideMockLocationWarning,
     };
-  }, []);
+    // Also store in global for access from non-React code
+    (global as any).modalManager = managerRef.current;
+  }, [showMockLocationWarning, hideMockLocationWarning]);
+
+  const contextValue: ModalContextType = {
+    showMockLocationWarning,
+    hideMockLocationWarning,
+  };
 
   return (
-    <ModalContext.Provider
-      value={{
-        showMockLocationWarning,
-        hideMockLocationWarning,
-      }}
-    >
+    <ModalContext.Provider value={contextValue}>
       {children}
       <MockLocationWarningModal
         visible={showMockLocationModal}
@@ -59,8 +62,11 @@ export const useModal = () => {
 export const showMockLocationWarning = () => {
   try {
     const manager = (global as any).modalManager;
-    if (manager) {
+    if (manager?.showMockLocationWarning) {
       manager.showMockLocationWarning();
+      console.log('[Modal] Mock location warning shown');
+    } else {
+      console.warn('[Modal] Manager not initialized yet');
     }
   } catch (e) {
     console.warn('[Modal] Could not show mock location warning:', e);
