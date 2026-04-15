@@ -24,6 +24,7 @@ const MockLocationWarningModal: React.FC<MockLocationWarningModalProps> = ({
   const [opacityAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
+    console.log('[MockLocationModal] Visibility changed:', visible);
     if (visible) {
       Animated.parallel([
         Animated.spring(scaleAnim, {
@@ -53,6 +54,8 @@ const MockLocationWarningModal: React.FC<MockLocationWarningModalProps> = ({
       ]).start();
     }
   }, [visible]);
+
+  console.log('[MockLocationModal] Rendering - visible:', visible);
 
   return (
     <Modal

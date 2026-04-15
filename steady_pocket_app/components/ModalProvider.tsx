@@ -14,11 +14,15 @@ export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({
   const [showMockLocationModal, setShowMockLocationModal] = useState(false);
   const managerRef = useRef<ModalContextType | null>(null);
 
+  console.log('[ModalProvider] Rendering - modal visible:', showMockLocationModal);
+
   const showMockLocationWarning = () => {
+    console.log('[ModalProvider] showMockLocationWarning called, setting state to true');
     setShowMockLocationModal(true);
   };
 
   const hideMockLocationWarning = () => {
+    console.log('[ModalProvider] hideMockLocationWarning called, setting state to false');
     setShowMockLocationModal(false);
   };
 
