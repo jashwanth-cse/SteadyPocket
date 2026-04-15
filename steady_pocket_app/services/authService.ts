@@ -22,7 +22,6 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { auth, db } from './firebase';
-import { createFraudAlert, hasAlertBeenShownToday, markAlertShownToday } from './fraudService';
 import { showMockLocationWarning } from '../components/ModalProvider';
 
 export type VerificationStatus =
@@ -234,36 +233,12 @@ export async function triggerPostLoginFraudCheck(uid: string): Promise<void> {
   console.log('[FraudCheck] Starting post-login fraud check for uid:', uid);
   setTimeout(async () => {
     try {
-      // Check if alert was already shown today (session deduplication)
-      const hasShown = await hasAlertBeenShownToday(uid);
-      console.log('[FraudCheck] Alert shown today?', hasShown);
-      if (hasShown) {
-        console.log('[FraudCheck] Alert already shown today, skipping');
-        return;
-      }
-
-      // For demo purposes, just show the modal without any detection
+      // For demo purposes, just show the modal without any database operations
       console.log('[FraudCheck] Showing mock location warning...');
-
-      // Create fraud alert in Firestore (user-scoped collection)
-      const { alertId } = await createFraudAlert(uid, {
-        alert_type: 'gps_spoofing',
-        risk_score: 0.9,
-        status: 'action_required',
-        detection_method: 'demo',
-      });
-
-      // Mark as shown today to prevent duplicate alerts
-      await markAlertShownToday(uid);
 
       // Show warning modal to user
       showMockLocationWarning();
       console.log('[FraudCheck] Modal show function called');
-
-      console.log('[FraudCheck] Alert created:', {
-        alertId,
-        uid,
-      });
     } catch (err) {
       // Silent failure - never interrupt login flow
       console.error('[FraudCheck] Post-login check failed:', err);
