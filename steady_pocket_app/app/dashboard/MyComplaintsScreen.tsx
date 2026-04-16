@@ -222,7 +222,13 @@ export default function MyComplaintsScreen() {
     <AppScreen
       title="My Complaints"
       showBack
-      onBack={() => router.back()}
+      onBack={() => {
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace('/dashboard/HomeScreen');
+        }
+      }}
     >
       <View style={styles.container}>
         {loading ? (
@@ -268,7 +274,7 @@ export default function MyComplaintsScreen() {
               </Text>
               <TouchableOpacity
                 style={styles.submitButton}
-                onPress={() => router.push('/dashboard/SupportComplaintsScreen')}
+                onPress={() => router.replace('/dashboard/SupportComplaintsScreen')}
                 activeOpacity={0.7}
               >
                 <MaterialIcons name="add" size={20} color={colors.textPrimary} />
@@ -312,7 +318,7 @@ export default function MyComplaintsScreen() {
             {/* Submit New Complaint Button */}
             <TouchableOpacity
               style={styles.newComplaintButton}
-              onPress={() => router.push('/dashboard/SupportComplaintsScreen')}
+              onPress={() => router.replace('/dashboard/SupportComplaintsScreen')}
               activeOpacity={0.7}
             >
               <MaterialIcons name="add" size={20} color={colors.textPrimary} />

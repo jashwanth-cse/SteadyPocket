@@ -16,10 +16,11 @@ import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { ProgressBar } from 'react-native-paper';
 
 import { auth, db } from '../../services/firebase';
-import { doc, collection, query, where, onSnapshot } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { getUserDocIdByAuthUid } from '../../services/authService';
 import { useErrorHandler } from '../../hooks/useErrorHandler';
+import { getCurrentDeviceLocation, calculateDistance } from '../../services/locationService';
 
 interface PolicyData {
   policy_id?: string;
@@ -39,6 +40,11 @@ interface UserData {
   phone_number?: string;
   risk_score?: number;
   wallet_balance?: number;
+  status?: string;
+  work_location?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 export default function DashboardScreen() {
@@ -49,6 +55,7 @@ export default function DashboardScreen() {
   const [weeklyIncome, setWeeklyIncome] = useState(0);
   const [loading, setLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [userDocId, setUserDocId] = useState<string | null>(null);
 
   useEffect(() => {
     let unsubscribeUser: (() => void) | null = null;
@@ -64,14 +71,15 @@ export default function DashboardScreen() {
         }
 
         // Get the actual user document ID
-        const userDocId = await getUserDocIdByAuthUid(uid);
-        if (!userDocId) {
+        const fetchedUserDocId = await getUserDocIdByAuthUid(uid);
+        if (!fetchedUserDocId) {
           console.warn('User document not found');
           setLoading(false);
           return;
         }
+        setUserDocId(fetchedUserDocId);
 
-        const userRef = doc(db, 'users', userDocId);
+        const userRef = doc(db, 'users', fetchedUserDocId);
         unsubscribeUser = onSnapshot(
           userRef,
           (docSnap) => {
@@ -84,7 +92,7 @@ export default function DashboardScreen() {
 
         const policyQ = query(
           collection(db, 'policies'),
-          where('user_id', '==', userDocId),
+          where('user_id', '==', fetchedUserDocId),
           where('status', 'in', ['active', 'pending'])
         );
 
@@ -102,7 +110,7 @@ export default function DashboardScreen() {
 
         const payoutsQ = query(
           collection(db, 'payouts'),
-          where('user_id', '==', userDocId)
+          where('user_id', '==', fetchedUserDocId)
         );
 
         unsubscribePayouts = onSnapshot(payoutsQ, (snapshot) => {
@@ -137,6 +145,39 @@ export default function DashboardScreen() {
       if (unsubscribePayouts) unsubscribePayouts();
     };
   }, []);
+
+  useEffect(() => {
+    const validateLocation = async () => {
+      if (!activePolicy || activePolicy.status !== 'active' || !userData || !userDocId) return;
+
+      try {
+        const { latitude, longitude } = await getCurrentDeviceLocation();
+        
+        if (userData.work_location?.latitude && userData.work_location?.longitude) {
+          const dist = calculateDistance(
+            latitude,
+            longitude,
+            userData.work_location.latitude,
+            userData.work_location.longitude
+          );
+          
+          let updatedStatus = 'active';
+          if (dist > 2) {
+            updatedStatus = 'under_review';
+          }
+          
+          if (userData.status !== updatedStatus) {
+            const userRef = doc(db, 'users', userDocId);
+            await updateDoc(userRef, { status: updatedStatus });
+          }
+        }
+      } catch (err) {
+        console.warn('Location validation error:', err);
+      }
+    };
+
+    validateLocation();
+  }, [activePolicy?.status, userData?.status, userData?.work_location, userDocId]);
 
   const calculateProgress = (start: any, end: any) => {
     if (!start || !end) return 0;
@@ -381,6 +422,29 @@ export default function DashboardScreen() {
     </TouchableOpacity>
   );
 
+  const renderUnderReviewCard = () => (
+    <SurfaceCard style={{ ...styles.protectionCard, borderColor: COLORS.error, borderWidth: 1.5 }}>
+      <View style={[styles.cardHeader, { backgroundColor: `${COLORS.error}08` }]}>
+        <View style={[styles.statusBadge, { backgroundColor: `${COLORS.error}15`, borderColor: `${COLORS.error}30` }]}>
+          <View style={[styles.activeDot, { backgroundColor: COLORS.error }]} />
+          <Text style={[TYPOGRAPHY.label, { color: COLORS.error, marginLeft: 6 }]}>
+            UNDER REVIEW
+          </Text>
+        </View>
+      </View>
+
+      <View style={{ padding: 24 }}>
+        <View style={styles.errorNotice}>
+          <Ionicons name="warning" size={24} color={COLORS.error} />
+          <Text style={[TYPOGRAPHY.body, { color: COLORS.primaryText, flex: 1, marginLeft: 12 }]}>
+            Your current location does not match your registered work location.
+            Payouts are temporarily disabled while we verify your activity.
+          </Text>
+        </View>
+      </View>
+    </SurfaceCard>
+  );
+
   const renderNoPolicyCard = () => (
     <SurfaceCard style={styles.noPolicyCard}>
       <View style={styles.noPolicyContent}>
@@ -400,8 +464,8 @@ export default function DashboardScreen() {
   return (
     <AppScreen
       title="Dashboard"
-      fabIcon="help"
-      onFabPress={() => router.push('/dashboard/SupportComplaintsScreen')}
+      fabIcon="map"
+      onFabPress={() => router.push('/dashboard/RiskMapScreen')}
     >
       <Stack>
         {loading ? (
@@ -435,11 +499,15 @@ export default function DashboardScreen() {
 
             {/* Main Protection Status Card */}
             {activePolicy ? (
-              activePolicy.status === 'active' ? renderProtectionStatusCard() : renderPendingActivationCard()
+              userData?.status === 'under_review' 
+                ? renderUnderReviewCard() 
+                : activePolicy.status === 'active' 
+                  ? renderProtectionStatusCard() 
+                  : renderPendingActivationCard()
             ) : renderNoPolicyCard()}
 
             {/* Quick Actions Section */}
-            {activePolicy && (
+            {activePolicy && userData?.status !== 'under_review' && (
               <View style={styles.quickActionsSection}>
                 <Text style={[TYPOGRAPHY.titleMedium, { color: COLORS.primaryText, marginBottom: 16 }]}>
                   Quick Actions
@@ -686,5 +754,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: `${COLORS.secondary}20`,
+  },
+  errorNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${COLORS.error}10`,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: `${COLORS.error}20`,
   },
 });

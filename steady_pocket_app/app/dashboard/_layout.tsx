@@ -32,6 +32,9 @@ export default function DashboardLayout() {
         <Stack.Screen name="PaymentsScreen" options={{ title: 'Payments' }} />
         <Stack.Screen name="ProfileScreen" options={{ title: 'Profile' }} />
         <Stack.Screen name="CoverageDetailsScreen" options={{ title: 'Coverage Details' }} />
+        <Stack.Screen name="SupportComplaintsScreen" options={{ title: 'Support' }} />
+        <Stack.Screen name="MyComplaintsScreen" options={{ title: 'My Complaints' }} />
+        <Stack.Screen name="RiskMapScreen" options={{ title: 'Risk Map' }} />
       </Stack>
     </ThemeProvider>
   );

@@ -93,11 +93,11 @@ export default function SupportComplaintsScreen() {
         [
           {
             text: 'View My Complaints',
-            onPress: () => router.push('/dashboard/MyComplaintsScreen'),
+            onPress: () => router.replace('/dashboard/MyComplaintsScreen'),
           },
           {
-            text: 'Go Back',
-            onPress: () => router.back(),
+            text: 'Go Home',
+            onPress: () => router.replace('/dashboard/HomeScreen'),
           },
         ]
       );
@@ -120,7 +120,13 @@ export default function SupportComplaintsScreen() {
     <AppScreen
       title="Support & Complaints"
       showBack
-      onBack={() => router.back()}
+      onBack={() => {
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace('/dashboard/HomeScreen');
+        }
+      }}
     >
       <View style={styles.container}>
         {/* Instructions Card */}
@@ -243,7 +249,7 @@ export default function SupportComplaintsScreen() {
         {/* View My Complaints Link */}
         <TouchableOpacity
           style={styles.viewComplaintsLink}
-          onPress={() => router.push('/dashboard/MyComplaintsScreen')}
+          onPress={() => router.replace('/dashboard/MyComplaintsScreen')}
           activeOpacity={0.7}
         >
           <Text style={styles.viewComplaintsText}>View My Complaints</Text>
@@ -303,6 +309,7 @@ const styles = StyleSheet.create({
   },
   dropdownText: {
     ...typography.body,
+    color: colors.textPrimary,
     flex: 1,
   },
   dropdownMenu: {
