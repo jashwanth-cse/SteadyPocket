@@ -401,7 +401,7 @@ export default function DashboardScreen() {
     <AppScreen
       title="Dashboard"
       fabIcon="help"
-      onFabPress={() => console.log('Support FAB pressed')}
+      onFabPress={() => router.push('/dashboard/SupportComplaintsScreen')}
     >
       <Stack>
         {loading ? (
@@ -484,10 +484,14 @@ export default function DashboardScreen() {
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity activeOpacity={0.7} style={styles.actionTile}>
+                <TouchableOpacity 
+                  activeOpacity={0.7} 
+                  style={styles.actionTile}
+                  onPress={() => router.push('/dashboard/SupportComplaintsScreen')}
+                >
                   <Ionicons name="help-circle-outline" size={24} color={COLORS.secondary} />
-                  <Text style={[TYPOGRAPHY.bodyHighlight, { color: COLORS.primaryText, marginTop: 8 }]}>
-                    Support
+                  <Text style={[TYPOGRAPHY.bodyHighlight, { color: COLORS.primaryText, marginTop: 8, textAlign: 'center' }]}>
+                    Support &{'\n'}Complaints
                   </Text>
                 </TouchableOpacity>
 

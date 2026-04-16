@@ -38,4 +38,22 @@ export const typography = {
     lineHeight: 16,
     letterSpacing: 0.4,
   } as TextStyle,
+  bodyHighlight: {
+    fontSize: 14,
+    fontWeight: '500' as FontWeight,
+    lineHeight: 20,
+    letterSpacing: 0.25,
+  } as TextStyle,
+  bodySemibold: {
+    fontSize: 14,
+    fontWeight: '600' as FontWeight,
+    lineHeight: 20,
+    letterSpacing: 0.25,
+  } as TextStyle,
+  titleLarge: {
+    fontSize: 28,
+    fontWeight: '600' as FontWeight,
+    lineHeight: 36,
+    letterSpacing: -0.5,
+  } as TextStyle,
 };
