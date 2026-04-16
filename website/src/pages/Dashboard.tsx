@@ -22,6 +22,7 @@ import {
   Bar
 } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
+import LiveProtectionActivity from '../components/LiveProtectionActivity';
 
 
 
@@ -212,6 +213,9 @@ export default function Dashboard() {
           ))
         )}
       </div>
+
+      {/* Live Protection Activity */}
+      <LiveProtectionActivity />
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

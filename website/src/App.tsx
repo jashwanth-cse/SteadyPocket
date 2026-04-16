@@ -10,6 +10,7 @@ import Payouts from './pages/Payouts';
 import Fraud from './pages/Fraud';
 import Login from './pages/Login';
 import Logs from './pages/Logs';
+import SmartProtectionSystem from './pages/SmartProtectionSystem';
 import { useStore } from './store/useStore';
 
 export default function App() {
@@ -60,6 +61,7 @@ export default function App() {
           <Route path="payouts" element={<Payouts />} />
           <Route path="fraud" element={<Fraud />} />
           <Route path="logs" element={<Logs />} />
+          <Route path="protection-system" element={<SmartProtectionSystem />} />
         </Route>
       </Routes>
     </BrowserRouter>
