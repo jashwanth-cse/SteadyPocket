@@ -18,7 +18,11 @@
       "backgroundColor": "#0A2540"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We need your location to detect suspicious activity and protect your account from fraud.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location to detect suspicious activity and protect your account from fraud."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -28,7 +32,12 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.jashwanthj.steadypocket"
+      "package": "com.jashwanthj.steadypocket",
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.READ_SECURE_SETTINGS"
+      ]
     },
     "web": {
       "bundler": "metro",

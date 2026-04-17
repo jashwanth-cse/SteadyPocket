@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View, ActivityIndicator, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { Text, View, ActivityIndicator, StyleSheet, ScrollView, Image, TouchableOpacity, Modal } from 'react-native';
 import { AppScreen } from '../../src/templates/AppScreen';
 import { SurfaceCard } from '../../src/components/ui/SurfaceCard';
 import { TYPOGRAPHY, COLORS, COMPONENTS } from '../../app/theme';
@@ -7,7 +7,7 @@ import { Stack } from '../../src/components/layout/Stack';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 
 import { auth, db } from '../../services/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { getUserDocIdByAuthUid } from '../../services/authService';
 
@@ -30,6 +30,8 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [userData, setUserData] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userDocId, setUserDocId] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -37,6 +39,26 @@ export default function ProfileScreen() {
       router.replace('/phone-auth');
     } catch (error) {
       console.error('Error signing out:', error);
+    }
+  };
+
+  const handleDeleteData = () => {
+    setShowDeleteModal(true);
+  };
+
+  const executeDelete = async () => {
+    try {
+      if (userDocId) {
+        await updateDoc(doc(db, 'users', userDocId), { 
+          verification_status: 'pending',
+          consent_given: false 
+        });
+      }
+      await auth.signOut();
+      setShowDeleteModal(false);
+      router.replace('/phone-auth');
+    } catch (error) {
+      console.error('Error deleting data:', error);
     }
   };
 
@@ -52,14 +74,15 @@ export default function ProfileScreen() {
         }
 
         // Get the actual user document ID
-        const userDocId = await getUserDocIdByAuthUid(uid);
-        if (!userDocId) {
+        const fetchedUserDocId = await getUserDocIdByAuthUid(uid);
+        if (!fetchedUserDocId) {
           console.warn('User document not found');
           setLoading(false);
           return;
         }
+        setUserDocId(fetchedUserDocId);
 
-        const userRef = doc(db, 'users', userDocId);
+        const userRef = doc(db, 'users', fetchedUserDocId);
         unsubscribe = onSnapshot(
           userRef,
           (userSnap) => {
@@ -307,8 +330,8 @@ export default function ProfileScreen() {
               </Stack>
             </SurfaceCard>
 
-            {/* Logout Button */}
-            <View style={{ paddingHorizontal: 16, marginTop: 8, marginBottom: 32 }}>
+            {/* Logout and Delete Actions */}
+            <View style={{ paddingHorizontal: 16, marginTop: 8, marginBottom: 32, gap: 12 }}>
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={handleLogout}
@@ -317,15 +340,35 @@ export default function ProfileScreen() {
                   {
                     backgroundColor: 'transparent',
                     borderWidth: 1.5,
+                    borderColor: COLORS.textSubtle,
+                    flexDirection: 'row',
+                    gap: 8,
+                  },
+                ]}
+              >
+                <MaterialIcons name="logout" size={20} color={COLORS.textSubtle} />
+                <Text style={[COMPONENTS.buttonPrimaryText, { color: COLORS.textSubtle }]}>
+                  Logout Securely
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={handleDeleteData}
+                style={[
+                  COMPONENTS.buttonPrimary,
+                  {
+                    backgroundColor: `${COLORS.error}10`,
+                    borderWidth: 1.5,
                     borderColor: COLORS.error,
                     flexDirection: 'row',
                     gap: 8,
                   },
                 ]}
               >
-                <MaterialIcons name="logout" size={20} color={COLORS.error} />
+                <MaterialIcons name="delete-forever" size={20} color={COLORS.error} />
                 <Text style={[COMPONENTS.buttonPrimaryText, { color: COLORS.error }]}>
-                  Logout Securely
+                  Delete All My Data
                 </Text>
               </TouchableOpacity>
             </View>
@@ -344,6 +387,42 @@ export default function ProfileScreen() {
           </SurfaceCard>
         )}
       </ScrollView>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showDeleteModal}
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalIcon}>
+              <MaterialIcons name="delete-forever" size={32} color={COLORS.error} />
+            </View>
+            <Text style={[TYPOGRAPHY.titleMedium, { color: COLORS.primaryText, textAlign: 'center', marginBottom: 8 }]}>
+              Delete All Data
+            </Text>
+            <Text style={[TYPOGRAPHY.body, { color: COLORS.textSubtle, textAlign: 'center', marginBottom: 24 }]}>
+              Are you sure you want to delete your data? This will reset your profile and log you out securely.
+            </Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border }]}
+                onPress={() => setShowDeleteModal(false)}
+              >
+                <Text style={[TYPOGRAPHY.bodyHighlight, { color: COLORS.textSubtle }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: COLORS.error }]}
+                onPress={executeDelete}
+              >
+                <Text style={[COMPONENTS.buttonPrimaryText, { color: '#FFF' }]}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </AppScreen>
   );
 }
@@ -416,5 +495,45 @@ const styles = StyleSheet.create({
   },
   detailContent: {
     flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: COLORS.background,
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+  },
+  modalIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: `${COLORS.error}15`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

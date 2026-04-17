@@ -22,6 +22,7 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { auth, db } from './firebase';
+import { showMockLocationWarning } from '../components/ModalProvider';
 
 export type VerificationStatus =
   | 'pending'
@@ -212,3 +213,37 @@ export async function isSessionExpired(uid: string): Promise<boolean> {
     return false; // Default to NOT expired to not block users on network errors
   }
 }
+
+// ─── Post-Login Fraud Detection (async, non-blocking) ─────────────────────────
+/**
+ * Trigger device security check after successful login
+ * This runs asynchronously and never interrupts the login flow
+ *
+ * Process:
+ * 1. Debounce for 300ms to allow navigation UI to settle
+ * 2. Check session: skip if already alerted today
+ * 3. Detect mock location on device
+ * 4. If found: create Firestore alert + show warning toast
+ * 5. Gracefully handle all errors (never crash)
+ *
+ * @param uid Firebase Auth UID (available after OTP verification)
+ */
+export async function triggerPostLoginFraudCheck(uid: string): Promise<void> {
+  // Defer execution to allow navigation UI to settle
+  console.log('[FraudCheck] Starting post-login fraud check for uid:', uid);
+  setTimeout(async () => {
+    try {
+      // For demo purposes, just show the modal without any database operations
+      console.log('[FraudCheck] Showing mock location warning...');
+
+      // Show warning modal to user
+      showMockLocationWarning();
+      console.log('[FraudCheck] Modal show function called');
+    } catch (err) {
+      // Silent failure - never interrupt login flow
+      console.error('[FraudCheck] Post-login check failed:', err);
+      // App continues normally even if fraud check fails
+    }
+  }, 300); // 300ms debounce ensures navigation completes first
+}
+

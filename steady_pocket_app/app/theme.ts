@@ -12,6 +12,7 @@ export const COLORS = {
   border: '#27272A',       // Divider / Subtle border
   error: '#EF4444',        // Error red
   success: '#22C55E',      // Success green
+  warning: '#F59E0B',      // Warning amber
 };
 
 // ── Typography ────────────────────────────────────────────────────────────
