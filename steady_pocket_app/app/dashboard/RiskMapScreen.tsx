@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Text, ActivityIndicator, Alert } from 'react-native';
 import * as Location from 'expo-location';
 import { AppScreen } from '../../src/templates/AppScreen';
 import { COLORS, TYPOGRAPHY } from '../../app/theme';
@@ -12,14 +12,17 @@ export default function RiskMapScreen() {
   const [location, setLocation] = useState<any>(null);
   const [workLocation, setWorkLocation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isRealtime, setIsRealtime] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
-          const loc = await Location.getCurrentPositionAsync({});
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
           setLocation(loc.coords);
+        } else {
+          Alert.alert('Permission Denied', 'Location access is required to view your live position.');
         }
 
         const uid = auth.currentUser?.uid;
@@ -31,6 +34,9 @@ export default function RiskMapScreen() {
               const data = userSnap.data();
               if (data.work_location) {
                 setWorkLocation(data.work_location);
+              }
+              if (data.is_realtime !== undefined) {
+                setIsRealtime(data.is_realtime);
               }
             }
           }
@@ -88,7 +94,7 @@ export default function RiskMapScreen() {
   ];
 
   return (
-    <AppScreen title="Risk Map" showBack>
+    <AppScreen title="Risk Map" showBack scrollable={false}>
       <View style={styles.container}>
         {loading ? (
           <View style={styles.loaderContainer}>
@@ -103,26 +109,28 @@ export default function RiskMapScreen() {
               location={location} 
               workLocation={workLocation} 
               initialRegion={initialRegion} 
-              MOCK_ZONES={MOCK_ZONES} 
+              MOCK_ZONES={isRealtime ? [] : MOCK_ZONES} 
             />
 
-            <View style={styles.legendContainer}>
-              <Text style={[TYPOGRAPHY.titleMedium, { color: COLORS.primaryText, marginBottom: 8 }]}>
-                Risk Zones Legend
-              </Text>
-              <View style={styles.legendRow}>
-                <View style={[styles.legendColor, { backgroundColor: 'rgba(255, 0, 0, 0.5)' }]} />
-                <Text style={[TYPOGRAPHY.body, { color: COLORS.primaryText }]}>High Fraud Risk Area</Text>
+            {!isRealtime && (
+              <View style={styles.legendContainer}>
+                <Text style={[TYPOGRAPHY.titleMedium, { color: COLORS.primaryText, marginBottom: 8 }]}>
+                  Risk Zones Legend
+                </Text>
+                <View style={styles.legendRow}>
+                  <View style={[styles.legendColor, { backgroundColor: 'rgba(255, 0, 0, 0.5)' }]} />
+                  <Text style={[TYPOGRAPHY.body, { color: COLORS.primaryText }]}>High Fraud Risk Area</Text>
+                </View>
+                <View style={styles.legendRow}>
+                  <View style={[styles.legendColor, { backgroundColor: 'rgba(255, 165, 0, 0.5)' }]} />
+                  <Text style={[TYPOGRAPHY.body, { color: COLORS.primaryText }]}>Moderate Risk</Text>
+                </View>
+                <View style={styles.legendRow}>
+                  <View style={[styles.legendColor, { backgroundColor: 'rgba(0, 255, 0, 0.5)' }]} />
+                  <Text style={[TYPOGRAPHY.body, { color: COLORS.primaryText }]}>Safe Zone</Text>
+                </View>
               </View>
-              <View style={styles.legendRow}>
-                <View style={[styles.legendColor, { backgroundColor: 'rgba(255, 165, 0, 0.5)' }]} />
-                <Text style={[TYPOGRAPHY.body, { color: COLORS.primaryText }]}>Moderate Risk</Text>
-              </View>
-              <View style={styles.legendRow}>
-                <View style={[styles.legendColor, { backgroundColor: 'rgba(0, 255, 0, 0.5)' }]} />
-                <Text style={[TYPOGRAPHY.body, { color: COLORS.primaryText }]}>Safe Zone</Text>
-              </View>
-            </View>
+            )}
           </>
         )}
       </View>
