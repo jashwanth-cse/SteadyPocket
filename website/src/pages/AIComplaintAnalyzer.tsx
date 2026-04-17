@@ -40,7 +40,8 @@ export default function AIComplaintAnalyzer() {
   const fetchComplaints = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/complaints");
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const response = await fetch(`${apiUrl}/api/complaints`);
       const data = await response.json();
       setComplaints(data);
     } catch (error) {
@@ -57,7 +58,8 @@ export default function AIComplaintAnalyzer() {
   const handleAnalyze = async (complaintId: string) => {
     setIsAnalyzing(complaintId);
     try {
-      const response = await fetch(`http://localhost:5000/api/complaints/analyze/${complaintId}`, {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const response = await fetch(`${apiUrl}/api/complaints/analyze/${complaintId}`, {
         method: "POST",
       });
       const result = await response.json();
@@ -79,7 +81,8 @@ export default function AIComplaintAnalyzer() {
   const handleAnalyzeAll = async () => {
     setIsAnalyzingAll(true);
     try {
-      const response = await fetch("http://localhost:5000/api/complaints/analyze-all", {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const response = await fetch(`${apiUrl}/api/complaints/analyze-all`, {
         method: "POST",
       });
       await response.json();

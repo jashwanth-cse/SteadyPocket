@@ -19,8 +19,24 @@ export default function RiskMapScreen() {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
-          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
-          setLocation(loc.coords);
+          // Attempt rapid fetch, fallback if it hangs
+          const getLoc = async () => {
+            let loc = await Location.getLastKnownPositionAsync();
+            if (!loc) {
+               loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
+            }
+            return loc;
+          };
+          
+          try {
+            const loc = await Promise.race([
+              getLoc(),
+              new Promise<null>((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+            ]);
+            if (loc) setLocation(loc.coords);
+          } catch (e) {
+            console.warn("Location fetch timeout, using default");
+          }
         } else {
           Alert.alert('Permission Denied', 'Location access is required to view your live position.');
         }

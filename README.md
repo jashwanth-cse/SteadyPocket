@@ -13,7 +13,7 @@
 <p align="center">
 
 🚀 <b>User App (Android APK)</b><br/>
-<a href="https://github.com/jashwanth-cse/SteadyPocket/releases/download/v1.0/SteadyPocket-v1.0.apk" target="_blank">
+<a href="https://github.com/jashwanth-cse/SteadyPocket/releases/download/v2.0/SteadyPocket.v2.0.apk" target="_blank">
   👉 Try SteadyPocket App
 </a>
 <br/><br/>

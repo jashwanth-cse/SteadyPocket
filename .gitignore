@@ -10,7 +10,7 @@ __pycache__/
 .env
 .env.local
 .env.*.local
-
+apphosting.yaml
 # IDE and Editor
 .vscode/
 .idea/

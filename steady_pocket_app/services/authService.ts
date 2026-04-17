@@ -229,21 +229,7 @@ export async function isSessionExpired(uid: string): Promise<boolean> {
  * @param uid Firebase Auth UID (available after OTP verification)
  */
 export async function triggerPostLoginFraudCheck(uid: string): Promise<void> {
-  // Defer execution to allow navigation UI to settle
-  console.log('[FraudCheck] Starting post-login fraud check for uid:', uid);
-  setTimeout(async () => {
-    try {
-      // For demo purposes, just show the modal without any database operations
-      console.log('[FraudCheck] Showing mock location warning...');
-
-      // Show warning modal to user
-      showMockLocationWarning();
-      console.log('[FraudCheck] Modal show function called');
-    } catch (err) {
-      // Silent failure - never interrupt login flow
-      console.error('[FraudCheck] Post-login check failed:', err);
-      // App continues normally even if fraud check fails
-    }
-  }, 300); // 300ms debounce ensures navigation completes first
+  // Fraud check logic removed for now - prevents ghost trigger on login.
+  console.log('[FraudCheck] Triggered for uid:', uid);
 }
 

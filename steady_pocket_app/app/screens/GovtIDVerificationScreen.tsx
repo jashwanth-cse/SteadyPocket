@@ -112,7 +112,7 @@ export default function GovtIDVerificationScreen() {
       ));
       if (!pendingPoliciesSnap.empty) {
         await updateVerificationStatus(uid, 'kyc_complete');
-        router.replace('/premium-payment');
+        router.replace('/dashboard/ConsentScreen');
         return;
       }
 
@@ -149,11 +149,11 @@ export default function GovtIDVerificationScreen() {
       });
 
       await updateVerificationStatus(uid, 'kyc_complete');
-      router.replace('/premium-payment');
+      router.replace('/dashboard/ConsentScreen');
     } catch (err) {
       console.error('Failed to generate policy:', err);
       // Still navigate so user isn't stuck
-      router.replace('/premium-payment');
+      router.replace('/dashboard/ConsentScreen');
     } finally {
       setIsGeneratingPolicy(false);
     }
@@ -276,7 +276,12 @@ export default function GovtIDVerificationScreen() {
       <View style={[COMPONENTS.screen, { paddingBottom: Math.max(insets.bottom + 24, 40) }]}>
         <View style={s.header}>
           <Text style={[TYPOGRAPHY.titleLarge, { color: COLORS.success, fontSize: 24, letterSpacing: 1 }]}>ACCESS GRANTED</Text>
-          <Text style={TYPOGRAPHY.bodyHighlight}>Your identity has been securely verified.</Text>
+          
+          <View style={{ alignSelf: 'flex-start', backgroundColor: `${COLORS.success}20`, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginTop: 8, flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={[TYPOGRAPHY.label, { color: COLORS.success }]}>✅ KYC Completed</Text>
+          </View>
+
+          <Text style={[TYPOGRAPHY.bodyHighlight, { marginTop: 12 }]}>Your identity has been securely verified.</Text>
         </View>
 
         <View style={COMPONENTS.contentPad}>

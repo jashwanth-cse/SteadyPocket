@@ -71,11 +71,17 @@ export default function SelfieVerificationScreen() {
     );
   }
 
-  // ── Capture ────────────────────────────────────────────────────────────────
   const handleCapture = async () => {
     try {
-      const photo = await cameraRef.current?.takePictureAsync({ quality: 0.85, skipProcessing: false });
-      if (photo?.uri) { setSelfieUri(photo.uri); setStage('preview'); }
+      const photo = await cameraRef.current?.takePictureAsync({
+        quality: 0.5,
+        skipProcessing: true,
+        base64: false,
+      });
+      if (photo?.uri) {
+        setSelfieUri(photo.uri);
+        setStage('preview');
+      }
     } catch {
       Alert.alert('Error', 'Failed to capture selfie. Please try again.');
     }

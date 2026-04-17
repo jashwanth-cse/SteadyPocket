@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "para-insurance-platform"
-  }
+  },
+  "targets": {
+    "para-insurance-platform": {
+      "hosting": {
+        "sp-console": [
+          "sp-console"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
