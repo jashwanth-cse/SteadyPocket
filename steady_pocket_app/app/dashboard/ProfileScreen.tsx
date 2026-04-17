@@ -7,7 +7,7 @@ import { Stack } from '../../src/components/layout/Stack';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 
 import { auth, db } from '../../services/firebase';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useRouter } from 'expo-router';
 import { getUserDocIdByAuthUid } from '../../services/authService';
 
@@ -49,10 +49,23 @@ export default function ProfileScreen() {
   const executeDelete = async () => {
     try {
       if (userDocId) {
+        // Reset user documentation status
         await updateDoc(doc(db, 'users', userDocId), { 
           verification_status: 'pending',
           consent_given: false 
         });
+
+        // Set the active policy to pending
+        const policiesRef = collection(db, 'policies');
+        const policyQ = query(
+          policiesRef,
+          where('user_id', '==', userDocId),
+          where('status', 'in', ['active'])
+        );
+        const policyDocs = await getDocs(policyQ);
+        for (const policyDoc of policyDocs.docs) {
+          await updateDoc(doc(db, 'policies', policyDoc.id), { status: 'pending' });
+        }
       }
       await auth.signOut();
       setShowDeleteModal(false);

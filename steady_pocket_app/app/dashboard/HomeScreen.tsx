@@ -8,7 +8,9 @@ import {
   ScrollView,
   Animated,
   Alert,
-  Switch
+  Switch,
+  Platform,
+  Modal
 } from 'react-native';
 import { AppScreen } from '../../src/templates/AppScreen';
 import { SurfaceCard } from '../../src/components/ui/SurfaceCard';
@@ -63,6 +65,7 @@ export default function DashboardScreen() {
   const [userDocId, setUserDocId] = useState<string | null>(null);
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [isRealtime, setIsRealtime] = useState(false);
+  const [showMockModal, setShowMockModal] = useState(false);
 
   useEffect(() => {
     let unsubscribeUser: (() => void) | null = null;
@@ -298,11 +301,7 @@ export default function DashboardScreen() {
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => {
-              if (userData?.consent_given !== true) {
-                setShowConsentModal(true);
-              } else {
-                router.push('/premium-payment');
-              }
+              router.push('/dashboard/ConsentScreen');
             }}
             style={[COMPONENTS.buttonPrimary, { backgroundColor: COLORS.secondary, marginTop: 16 }]}
           >
@@ -542,7 +541,11 @@ export default function DashboardScreen() {
                   <Switch 
                     value={isRealtime} 
                     onValueChange={async (val) => {
+                      if (!val && isRealtime) {
+                        setShowMockModal(true);
+                      }
                       setIsRealtime(val);
+                      
                       if (userDocId) {
                         try {
                           await updateDoc(doc(db, 'users', userDocId), { is_realtime: val });
@@ -636,10 +639,14 @@ export default function DashboardScreen() {
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity activeOpacity={0.7} style={styles.actionTile}>
+                <TouchableOpacity 
+                  activeOpacity={0.7} 
+                  style={styles.actionTile}
+                  onPress={() => router.push('/dashboard/TermsScreen')}
+                >
                   <Ionicons name="document-text-outline" size={24} color={COLORS.textSubtle} />
                   <Text style={[TYPOGRAPHY.bodyHighlight, { color: COLORS.primaryText, marginTop: 8 }]}>
-                    Docs
+                    T & C
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -648,12 +655,70 @@ export default function DashboardScreen() {
         )}
       </Stack>
 
-      {/* Consent Modal Overlay */}
+      {/* Consent Modal Overlay (Depreciated inner logic but keeping component in memory) */}
       <ConsentModal
         visible={showConsentModal}
         onAllow={handleConsentAllow}
         onDecline={() => setShowConsentModal(false)}
       />
+
+      {/* Mock Location Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showMockModal}
+        onRequestClose={() => setShowMockModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {/* Crossed-out location pin icon */}
+            <View style={styles.mockModalIcon}>
+              <MaterialIcons name="location-off" size={40} color={COLORS.error} />
+            </View>
+
+            <Text style={[TYPOGRAPHY.titleLarge, { color: COLORS.primaryText, textAlign: 'center', marginBottom: 8 }]}>
+              Mock Location Detected
+            </Text>
+            <Text style={[TYPOGRAPHY.body, { color: COLORS.textSubtle, textAlign: 'center', marginBottom: 24, lineHeight: 22 }]}>
+              We detected that mock location is enabled on your device.
+            </Text>
+
+            {/* Dark info row */}
+            <View style={styles.mockInfoRowDark}>
+              <MaterialIcons name="info-outline" size={18} color={COLORS.textSubtle} />
+              <Text style={[TYPOGRAPHY.body, { color: COLORS.primaryText, flex: 1, marginLeft: 10 }]}>
+                Developer Settings → Remove all mock location apps
+              </Text>
+            </View>
+
+            {/* Green lock row */}
+            <View style={styles.mockInfoRowGreen}>
+              <MaterialIcons name="lock" size={18} color={COLORS.success} />
+              <Text style={[TYPOGRAPHY.body, { color: COLORS.primaryText, flex: 1, marginLeft: 10 }]}>
+                Turn off mock location to receive instant payouts
+              </Text>
+            </View>
+
+            {/* Dismiss / Got it buttons */}
+            <View style={styles.mockModalActions}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                style={styles.mockDismissButton}
+                onPress={() => setShowMockModal(false)}
+              >
+                <Text style={[TYPOGRAPHY.bodyHighlight, { color: COLORS.primary }]}>Dismiss</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={styles.mockGotItButton}
+                onPress={() => setShowMockModal(false)}
+              >
+                <Text style={[TYPOGRAPHY.bodyHighlight, { color: '#FFF' }]}>Got it</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </AppScreen>
   );
 }
@@ -810,21 +875,56 @@ const styles = StyleSheet.create({
   },
   additionalActionsSection: {
     marginTop: 32,
-    marginBottom: 24,
+    marginBottom: 48,
   },
   additionalActionsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
   actionTile: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 12,
+    width: '30%',
+    aspectRatio: 1,
     backgroundColor: COLORS.surface,
     borderRadius: 16,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: COLORS.border,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: COLORS.background,
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+  },
+  modalIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: `${COLORS.secondary}15`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
   },
   alertNotice: {
     flexDirection: 'row',
@@ -843,5 +943,59 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: `${COLORS.error}20`,
+  },
+  mockModalIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: `${COLORS.error}15`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  mockInfoRowDark: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 10,
+    width: '100%',
+  },
+  mockInfoRowGreen: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${COLORS.success}12`,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: `${COLORS.success}30`,
+    marginBottom: 24,
+    width: '100%',
+  },
+  mockModalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  mockDismissButton: {
+    flex: 1,
+    height: 52,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+    backgroundColor: 'transparent',
+  },
+  mockGotItButton: {
+    flex: 1,
+    height: 52,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primary,
   },
 });
