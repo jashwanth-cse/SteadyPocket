@@ -6,6 +6,11 @@
 
 # 🚴‍♂️ Steady Pocket  
 ### Rain or strike payouts in your pocket
+<br/><br/>
+🧑‍💼 <b>Pitch Deck</b><br/>
+<a href="https://drive.google.com/drive/folders/1kykBCiM6_Brw_f-zR5mytN-PmI7xX8QO" target="_blank">
+  👉 Open Pitch Deck
+</a>
 
 </p>
 ### 🌐 Live Demo
