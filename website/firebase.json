@@ -1,6 +1,5 @@
 {
   "hosting": {
-    "site": "sp-console",
     "public": "dist",
     "ignore": [
       "firebase.json",

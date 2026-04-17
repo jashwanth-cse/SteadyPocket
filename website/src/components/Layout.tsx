@@ -4,13 +4,16 @@ import {
   Users,
   ShieldCheck,
   Banknote,
+  PiggyBank,
   AlertTriangle,
   LogOut,
   Menu,
   X,
   Clock,
+  Brain,
   BrainCircuit,
   ChevronDown,
+  MessageSquare,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { auth } from "../firebase";
@@ -53,9 +56,12 @@ export default function Layout() {
     { to: "/riders", icon: Users, label: "Riders" },
     { to: "/policies", icon: ShieldCheck, label: "Policies" },
     { to: "/payouts", icon: Banknote, label: "Payouts" },
+    { to: "/payout-planning", icon: PiggyBank, label: "Payout Planning" },
     { to: "/fraud", icon: AlertTriangle, label: "Fraud Alerts" },
     { to: "/logs", icon: Clock, label: "Audit Logs" },
     { to: "/protection-system", icon: BrainCircuit, label: "Smart Protection" },
+    { to: "/analytics", icon: Brain, label: "AI Analytics" },
+    { to: "/complaint-analyzer", icon: MessageSquare, label: "AI Complaint Analyzer" },
   ];
 
   return (
@@ -105,6 +111,7 @@ export default function Layout() {
               <NavLink
                 key={item.to}
                 to={item.to}
+                end={item.to === "/"}
                 onClick={() => {
                   if (window.innerWidth < 1024) setIsSidebarOpen(false);
                 }}
