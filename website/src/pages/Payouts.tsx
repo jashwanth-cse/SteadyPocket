@@ -1,23 +1,24 @@
-import { useState } from 'react';
-import { auth } from '../firebase';
-import { useStore } from '../store/useStore';
-import { 
-  Banknote, 
-  MapPin, 
-  CloudRain, 
-  Flame, 
+import { useMemo, useState } from "react";
+import { auth } from "../firebase";
+import { useStore } from "../store/useStore";
+import {
+  Banknote,
+  MapPin,
+  CloudRain,
+  Flame,
   Users,
   Clock,
   CheckCircle2,
   Download,
   Search,
-  Filter
-} from 'lucide-react';
-import { downloadCSV } from '../utils/exportUtils';
+  CalendarDays,
+  TrendingUp,
+} from "lucide-react";
+import { downloadCSV } from "../utils/exportUtils";
 
 interface PayoutEvent {
   id: string;
-  event_type: 'rain' | 'strike' | 'heatwave';
+  event_type: "rain" | "strike" | "heatwave";
   location: string;
   affected_riders: number;
   total_payout: number;
@@ -25,25 +26,86 @@ interface PayoutEvent {
   timestamp: string;
 }
 
+const MONTH_OPTIONS = [
+  { value: "all", label: "All Months" },
+  { value: "0", label: "January" },
+  { value: "1", label: "February" },
+  { value: "2", label: "March" },
+  { value: "3", label: "April" },
+  { value: "4", label: "May" },
+  { value: "5", label: "June" },
+  { value: "6", label: "July" },
+  { value: "7", label: "August" },
+  { value: "8", label: "September" },
+  { value: "9", label: "October" },
+  { value: "10", label: "November" },
+  { value: "11", label: "December" },
+];
+
+function normalizeLocation(value?: string) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
+function getPayoutDate(item: any): Date | null {
+  const raw = item?.timestamp || item?.created_at || item?.processed_at;
+  if (!raw) return null;
+  if (typeof raw?.toDate === "function") return raw.toDate();
+  if (typeof raw?.seconds === "number") return new Date(raw.seconds * 1000);
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function buildFutureYearOptions() {
+  const currentYear = new Date().getFullYear();
+  return [
+    { value: "all", label: "All Years" },
+    ...Array.from({ length: 6 }, (_, index) => {
+      const year = currentYear + index;
+      return { value: String(year), label: String(year) };
+    }),
+  ];
+}
+
 export default function Payouts() {
   const { payouts: events, isLoading, performAction, getUserName } = useStore();
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedLocation, setSelectedLocation] = useState("all");
+  const [selectedMonth, setSelectedMonth] = useState("all");
+  const [selectedYear, setSelectedYear] = useState("all");
+
+  const yearOptions = useMemo(() => buildFutureYearOptions(), []);
+  const locationOptions = useMemo(() => {
+    const uniqueLocations = Array.from(
+      new Set(
+        (events || [])
+          .map((item: any) => item.location || "Remote")
+          .filter(Boolean),
+      ),
+    ).sort((a, b) => String(a).localeCompare(String(b)));
+
+    return ["all", ...uniqueLocations];
+  }, [events]);
 
   const getEventIcon = (type: string) => {
     switch (type) {
-      case 'rain': return <CloudRain className="text-blue-400" />;
-      case 'heatwave': return <Flame className="text-orange-400" />;
-      default: return <Users className="text-purple-400" />;
+      case "rain":
+        return <CloudRain className="text-blue-400" />;
+      case "heatwave":
+        return <Flame className="text-orange-400" />;
+      default:
+        return <Users className="text-purple-400" />;
     }
   };
 
   const handleApprove = async (payoutId: string) => {
     setProcessingId(payoutId);
     try {
-      await performAction(`/api/payouts/${payoutId}/approve`, 'PATCH');
+      await performAction(`/api/payouts/${payoutId}/approve`, "PATCH");
     } catch (err: any) {
       // Error already shown via alert(err.message)
 
@@ -58,7 +120,9 @@ export default function Payouts() {
       <div className="space-y-8 animate-pulse">
         <div className="h-10 w-48 bg-white/5 rounded-lg" />
         <div className="space-y-4">
-          {[1,2].map(i => <div key={i} className="h-32 bg-white/5 rounded-3xl" />)}
+          {[1, 2].map((i) => (
+            <div key={i} className="h-32 bg-white/5 rounded-3xl" />
+          ))}
         </div>
       </div>
     );
@@ -70,8 +134,8 @@ export default function Payouts() {
         <div className="flex-1 flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 group-focus-within:text-emerald-500 transition-colors" />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Search by Rider Name or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -80,24 +144,85 @@ export default function Payouts() {
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-            {['all', 'Pending', 'Processing', 'Completed', 'Failed'].map((status) => (
-              <button
-                key={status}
-                onClick={() => setStatusFilter(status)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                  statusFilter === status 
-                    ? 'bg-emerald-500 text-black' 
-                    : 'bg-white/5 text-neutral-500 hover:text-white border border-transparent hover:border-white/10'
-                }`}
+            {["all", "Pending", "Processing", "Completed", "Failed"].map(
+              (status) => (
+                <button
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                    statusFilter === status
+                      ? "bg-emerald-500 text-black"
+                      : "bg-white/5 text-neutral-500 hover:text-white border border-transparent hover:border-white/10"
+                  }`}
+                >
+                  {status === "all" ? "All Payouts" : status}
+                </button>
+              ),
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+              <MapPin className="w-4 h-4 text-yellow-300" />
+              <select
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+                className="bg-transparent text-xs font-semibold text-white outline-none border-none focus:ring-0"
               >
-                {status === 'all' ? 'All Payouts' : status}
-              </button>
-            ))}
+                {locationOptions.map((location) => (
+                  <option
+                    key={location}
+                    value={location}
+                    className="bg-[#111111]"
+                  >
+                    {location === "all" ? "All Locations" : location}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+              <CalendarDays className="w-4 h-4 text-sky-300" />
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="bg-transparent text-xs font-semibold text-white outline-none border-none focus:ring-0"
+              >
+                {MONTH_OPTIONS.map((month) => (
+                  <option
+                    key={month.value}
+                    value={month.value}
+                    className="bg-[#111111]"
+                  >
+                    {month.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+              <TrendingUp className="w-4 h-4 text-emerald-300" />
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="bg-transparent text-xs font-semibold text-white outline-none border-none focus:ring-0"
+              >
+                {yearOptions.map((year) => (
+                  <option
+                    key={year.value}
+                    value={year.value}
+                    className="bg-[#111111]"
+                  >
+                    {year.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
-        <button 
-          onClick={() => downloadCSV(events, 'payouts-report')}
+        <button
+          onClick={() => downloadCSV(events, "payouts-report")}
           className="flex items-center gap-2 px-6 py-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl hover:bg-emerald-500/20 transition-all text-sm font-bold w-fit"
         >
           <Download className="w-4 h-4" /> Export
@@ -106,113 +231,199 @@ export default function Payouts() {
 
       <div className="grid grid-cols-1 gap-4">
         {events
-          .filter(p => {
-            const name = getUserName(p.userId || p.user_id) || '';
-            const matchesSearch = 
-              p.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
+          .filter((p) => {
+            const name = getUserName(p.userId || p.user_id) || "";
+            const payoutDate = getPayoutDate(p);
+            const payoutLocation = p.location || "Remote";
+            const matchesSearch =
+              p.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
               name.toLowerCase().includes(searchQuery.toLowerCase());
-            
-            const currentStatus = (p.status || 'pending').toLowerCase();
+
+            const currentStatus = (p.status || "pending").toLowerCase();
             const targetFilter = statusFilter.toLowerCase();
-            const matchesStatus = statusFilter === 'all' || currentStatus === targetFilter;
-            
-            return matchesSearch && matchesStatus;
+            const matchesStatus =
+              statusFilter === "all" || currentStatus === targetFilter;
+
+            const matchesLocation =
+              selectedLocation === "all" ||
+              normalizeLocation(payoutLocation) ===
+                normalizeLocation(selectedLocation);
+
+            const matchesMonth =
+              selectedMonth === "all" ||
+              (payoutDate
+                ? payoutDate.getMonth() === Number(selectedMonth)
+                : false);
+
+            const matchesYear =
+              selectedYear === "all" ||
+              (payoutDate
+                ? payoutDate.getFullYear() === Number(selectedYear)
+                : false);
+
+            return (
+              matchesSearch &&
+              matchesStatus &&
+              matchesLocation &&
+              matchesMonth &&
+              matchesYear
+            );
           })
           .map((payoutItem) => (
-          <div 
-            key={payoutItem.id} 
-            className="bg-[#111111] border border-white/5 p-6 rounded-3xl flex flex-col xl:flex-row xl:items-center justify-between gap-6 hover:border-emerald-500/10 transition-all group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/5 flex items-center justify-center shrink-0">
-                {getEventIcon(payoutItem.event_type || '')}
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-base sm:text-lg font-bold text-white capitalize truncate">{getUserName((payoutItem as any).user_id || payoutItem.userId)}</h3>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-neutral-500 mt-1">
-                  <span className="flex items-center gap-1">{(payoutItem.event_type || 'System')}</span>
-                  <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3" /> {payoutItem.location || 'Remote'}</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> 
-                    {payoutItem.timestamp ? (
-                      typeof payoutItem.timestamp === 'string' 
-                        ? new Date(payoutItem.timestamp).toLocaleDateString()
-                        : payoutItem.timestamp?.seconds 
-                          ? new Date(payoutItem.timestamp.seconds * 1000).toLocaleDateString()
-                          : 'N/A'
-                    ) : 'N/A'}
-                  </span>
+            <div
+              key={payoutItem.id}
+              className="bg-[#111111] border border-white/5 p-6 rounded-3xl flex flex-col xl:flex-row xl:items-center justify-between gap-6 hover:border-emerald-500/10 transition-all group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/5 flex items-center justify-center shrink-0">
+                  {getEventIcon(payoutItem.event_type || "")}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-lg font-bold text-white capitalize truncate">
+                    {getUserName(
+                      (payoutItem as any).user_id || payoutItem.userId,
+                    )}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-neutral-500 mt-1">
+                    <span className="flex items-center gap-1">
+                      {payoutItem.event_type || "System"}
+                    </span>
+                    <span className="flex items-center gap-1 truncate">
+                      <MapPin className="w-3 h-3" />{" "}
+                      {payoutItem.location || "Remote"}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {payoutItem.timestamp
+                        ? typeof payoutItem.timestamp === "string"
+                          ? new Date(payoutItem.timestamp).toLocaleDateString()
+                          : payoutItem.timestamp?.seconds
+                            ? new Date(
+                                payoutItem.timestamp.seconds * 1000,
+                              ).toLocaleDateString()
+                            : "N/A"
+                        : "N/A"}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-12 w-full xl:w-auto">
-              <div>
-                <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-1">Affected</p>
-                <p className="text-lg font-bold text-white">1 Rider</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-1">Amount</p>
-                <p className="text-lg font-bold text-emerald-400">₹{(payoutItem.amount || (payoutItem as any).total_payout || 0).toLocaleString()}</p>
-              </div>
-              <div className="col-span-2 lg:col-span-1 border-t border-white/5 pt-4 lg:border-none lg:pt-0">
-                <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-1">Status</p>
-                <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
-                  <CheckCircle2 className="w-4 h-4" />
-                  {payoutItem.status || 'Pending'}
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-12 w-full xl:w-auto">
+                <div>
+                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-1">
+                    Affected
+                  </p>
+                  <p className="text-lg font-bold text-white">1 Rider</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-1">
+                    Amount
+                  </p>
+                  <p className="text-lg font-bold text-emerald-400">
+                    ₹
+                    {(
+                      payoutItem.amount ||
+                      (payoutItem as any).total_payout ||
+                      0
+                    ).toLocaleString()}
+                  </p>
+                </div>
+                <div className="col-span-2 lg:col-span-1 border-t border-white/5 pt-4 lg:border-none lg:pt-0">
+                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-1">
+                    Status
+                  </p>
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                    <CheckCircle2 className="w-4 h-4" />
+                    {payoutItem.status || "Pending"}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-2 w-full xl:w-auto mt-2 xl:mt-0">
-              {payoutItem.status === 'Processing' && (
-                <button 
-                  onClick={() => handleApprove(payoutItem.id)}
-                  disabled={processingId === payoutItem.id}
-                  className={`w-full sm:w-auto px-6 py-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 rounded-xl text-sm font-bold transition-all ${processingId === payoutItem.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+              <div className="flex flex-col sm:flex-row items-center gap-2 w-full xl:w-auto mt-2 xl:mt-0">
+                {payoutItem.status === "Processing" && (
+                  <button
+                    onClick={() => handleApprove(payoutItem.id)}
+                    disabled={processingId === payoutItem.id}
+                    className={`w-full sm:w-auto px-6 py-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 rounded-xl text-sm font-bold transition-all ${processingId === payoutItem.id ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    {processingId === payoutItem.id
+                      ? "Approving..."
+                      : "Approve"}
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedEvent(payoutItem)}
+                  className="w-full sm:w-auto px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-bold text-white transition-all"
                 >
-                  {processingId === payoutItem.id ? 'Approving...' : 'Approve'}
+                  View Details
                 </button>
-              )}
-              <button 
-                onClick={() => setSelectedEvent(payoutItem)}
-                className="w-full sm:w-auto px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-bold text-white transition-all"
-              >
-                View Details
-              </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       {/* Details Modal */}
       {selectedEvent && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
           <div className="bg-[#111111] border border-white/10 p-8 rounded-3xl max-w-lg w-full">
-            <h2 className="text-2xl font-bold text-white mb-6">Payout details</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">
+              Payout details
+            </h2>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <p className="text-neutral-500 font-bold uppercase text-[10px]">Rider</p>
-                <p className="text-white font-bold">{getUserName((selectedEvent as any).user_id || selectedEvent.userId)}</p>
-                
-                <p className="text-neutral-500 font-bold uppercase text-[10px]">Payout ID</p>
-                <p className="text-white font-mono">{(selectedEvent as any).payout_id || selectedEvent.id}</p>
+                <p className="text-neutral-500 font-bold uppercase text-[10px]">
+                  Rider
+                </p>
+                <p className="text-white font-bold">
+                  {getUserName(
+                    (selectedEvent as any).user_id || selectedEvent.userId,
+                  )}
+                </p>
 
-                <p className="text-neutral-500 font-bold uppercase text-[10px]">Policy ID</p>
-                <p className="text-white font-mono">{(selectedEvent as any).policy_id || 'N/A'}</p>
+                <p className="text-neutral-500 font-bold uppercase text-[10px]">
+                  Payout ID
+                </p>
+                <p className="text-white font-mono">
+                  {(selectedEvent as any).payout_id || selectedEvent.id}
+                </p>
 
-                <p className="text-neutral-500 font-bold uppercase text-[10px]">Event Type</p>
-                <p className="text-white capitalize">{selectedEvent.event_type || 'System'}</p>
+                <p className="text-neutral-500 font-bold uppercase text-[10px]">
+                  Policy ID
+                </p>
+                <p className="text-white font-mono">
+                  {(selectedEvent as any).policy_id || "N/A"}
+                </p>
 
-                <p className="text-neutral-500 font-bold uppercase text-[10px]">Amount</p>
-                <p className="text-emerald-400 font-bold text-xl">₹{(selectedEvent.amount || selectedEvent.total_payout || 0).toLocaleString()}</p>
+                <p className="text-neutral-500 font-bold uppercase text-[10px]">
+                  Event Type
+                </p>
+                <p className="text-white capitalize">
+                  {selectedEvent.event_type || "System"}
+                </p>
+
+                <p className="text-neutral-500 font-bold uppercase text-[10px]">
+                  Amount
+                </p>
+                <p className="text-emerald-400 font-bold text-xl">
+                  ₹
+                  {(
+                    selectedEvent.amount ||
+                    selectedEvent.total_payout ||
+                    0
+                  ).toLocaleString()}
+                </p>
               </div>
               <div>
-                <p className="text-neutral-500 font-bold uppercase text-[10px] mb-1">Reason</p>
-                <p className="text-neutral-300 text-sm">{(selectedEvent as any).reason || 'Standard disruption payment'}</p>
+                <p className="text-neutral-500 font-bold uppercase text-[10px] mb-1">
+                  Reason
+                </p>
+                <p className="text-neutral-300 text-sm">
+                  {(selectedEvent as any).reason ||
+                    "Standard disruption payment"}
+                </p>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => setSelectedEvent(null)}
               className="mt-8 w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-bold transition-all"
             >
@@ -224,5 +435,3 @@ export default function Payouts() {
     </div>
   );
 }
-
-
